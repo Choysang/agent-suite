@@ -1,0 +1,11 @@
+{
+  "cwd": "D:\\work\\app",
+  "model": "claude-opus-5-5",
+  "texts": [
+    "请帮我做个待办应用",
+    "第二条：界面用中文\n[图片]",
+    "/handoff 7",
+    "改成蓝色",
+    "!npm test"
+  ]
+}

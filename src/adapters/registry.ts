@@ -1,6 +1,6 @@
 // ~/.handoff/projects.json: slug -> repository root, so `/handoff myapp-7` resolves from anywhere.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import type { Registry } from '../ports.ts';
 
@@ -32,7 +32,9 @@ export class FileRegistry implements Registry {
 
   private save(all: Record<string, string>): void {
     mkdirSync(dirname(this.file), { recursive: true });
-    writeFileSync(this.file, JSON.stringify(all, null, 2) + '\n');
+    const tmp = `${this.file}.${process.pid}.tmp`;
+    writeFileSync(tmp, JSON.stringify(all, null, 2) + '\n');
+    renameSync(tmp, this.file);
   }
 }
 

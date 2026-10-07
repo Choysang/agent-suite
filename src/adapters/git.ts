@@ -1,7 +1,7 @@
 // Git adapter: the Store lives in refs/handoff/*, the Workspace is the working tree. Plumbing only.
 
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, rmSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, rmSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { LIMITS, type Claim, type Manifest } from '../core/types.ts';
 import type { Bundle, Commit, FileIn, Snapshot, Store, Workspace } from '../ports.ts';
@@ -98,7 +98,13 @@ export class Git {
   /** Create `ref` only if absent, or move it only if it still points at `old`. Atomic either way. */
   async cas(ref: string, oid: string, old: string | null): Promise<boolean> {
     const command = old === null ? `create ${ref} ${oid}` : `update ${ref} ${oid} ${old}`;
-    return this.succeeds(['update-ref', '--stdin'], { input: command + '\n' });
+    const result = await this.raw(['update-ref', '--stdin'], { input: command + '\n', ok: () => true });
+    if (result.code === 0) return true;
+    // Losing the race means the ref exists (or moved); anything else is a real failure.
+    const now = await this.raw(['rev-parse', '--verify', '-q', ref], { ok: () => true });
+    const lost = old === null ? now.code === 0 : now.out.toString('utf8').trim() !== old;
+    if (lost) return false;
+    throw new Error(`git update-ref ${ref}: ${result.err.trim()}`);
   }
 
   async refs(prefix: string): Promise<Map<number, string>> {
@@ -172,7 +178,9 @@ export class GitStore implements Store {
     if (await this.git.cas(ref, commit, null)) return { ok: true, previous: null };
     const old = (await this.git.refs(CLAIMS)).get(n) ?? null;
     const previous = (await this.claims()).get(n) ?? null;
-    return { ok: force && old !== null && (await this.git.cas(ref, commit, old)), previous };
+    if (force && old !== null && (await this.git.cas(ref, commit, old))) return { ok: true, previous };
+    // Lost to a concurrent claimant: report the winner, not the claim we read before losing.
+    return { ok: false, previous: (await this.claims()).get(n) ?? previous };
   }
 
   async keep(n: number, commit: string): Promise<string> {
@@ -182,8 +190,9 @@ export class GitStore implements Store {
   }
 
   async sync(remote: string): Promise<string> {
-    const pushed = await this.git.raw(['push', remote, 'refs/handoff/*:refs/handoff/*'], { ok: () => true });
-    const fetched = await this.git.raw(['fetch', remote, 'refs/handoff/*:refs/handoff/*'], { ok: () => true });
+    // Seals are immutable, so a rejected seal ref means two machines minted the same number: surface it.
+    const pushed = await this.git.raw(['push', remote, 'refs/handoff/*:refs/handoff/*']);
+    const fetched = await this.git.raw(['fetch', remote, 'refs/handoff/*:refs/handoff/*']);
     return [pushed.err, fetched.err].map(s => s.trim()).filter(Boolean).join('\n') || '已同步';
   }
 }
@@ -240,8 +249,13 @@ export class GitWorkspace implements Workspace {
         .toString('utf8')
         .split('\0')
         .filter(Boolean);
-      const big = untracked.filter(p => statSync(join(this.root, p)).size > LIMITS.snapshotBytes);
-      const small = untracked.filter(p => !big.includes(p));
+      // Nested repositories (`dir/`) and paths that vanished mid-scan stay out of the snapshot.
+      const sized = untracked.filter(p => !p.endsWith('/')).flatMap(p => {
+        const size = sizeOf(join(this.root, p));
+        return size === null ? [] : [{ p, size }];
+      });
+      const big = sized.filter(f => f.size > LIMITS.snapshotBytes).map(f => f.p);
+      const small = sized.filter(f => f.size <= LIMITS.snapshotBytes).map(f => f.p);
       if (small.length) {
         await this.git.run(['add', '--pathspec-from-file=-', '--pathspec-file-nul'], { env, input: small.join('\0') });
       }
@@ -294,6 +308,14 @@ export class GitWorkspace implements Workspace {
 
   async addWorktree(path: string, branch: string, at: string): Promise<void> {
     await this.git.run(['worktree', 'add', '-b', branch, path, at]);
+  }
+}
+
+function sizeOf(path: string): number | null {
+  try {
+    return lstatSync(path).size;
+  } catch {
+    return null;
   }
 }
 

@@ -91,3 +91,12 @@ test('the DAG derives status, parents, frontiers and work to take', () => {
   assert.deepEqual(frontier(views, [3, 5]), [3, 5]);
   assert.deepEqual(takeable(views).map(v => v.manifest.id), [5]);
 });
+
+test('review regressions: version strings are not citations; decorated lane headers are reported', () => {
+  assert.deepEqual(citations('Node v24.1、/api/v1.2 与 [v3.1]'), ['v3.1']);
+  assert.equal(renumber('Node v1.0 见 [v1.2]', 1, 2), 'Node v1.0 见 [v2.2]');
+  const fork = '## lane: a\nnext: a\naccept: a\n\n## lane: b (后端)\nnext: b\naccept: b\n';
+  assert.equal(lanes(fork).length, 2);
+  const problems = validate({ brief: BRIEF.replace(' CITE', ''), state: state('x'), fork, recalled: null }, new Set());
+  assert.ok(problems.some(p => p.includes('b (后端)')), problems.join('\n'));
+});

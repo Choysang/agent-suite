@@ -16,7 +16,8 @@ export const BRIEF_HEADINGS = ['目标', '范围', '最终验收标准', '用户
 export const STATE_HEADINGS = ['进度', '决定', '下一步', '未决问题', '现场'] as const;
 export const DECISION_TAGS = ['user', 'proven', 'agent', 'open'] as const;
 
-const LANE = /^## lane:\s*(\S+)\s*$/;
+/** Any `## lane:` line opens a lane; a malformed name is reported, never merged into the previous lane. */
+const LANE = /^## lane:\s*(.*?)\s*$/;
 const LANE_NAME = /^[a-z0-9][a-z0-9-]*$/;
 
 /** Template comments guide the writer; receivers never see them. */

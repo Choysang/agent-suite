@@ -29,11 +29,11 @@ export function prepared(p: Prepared): string {
     '  brief.md  项目提示词 ≤120 行：持久要求、被否决方案引用原话 [vN.K]',
     '  state.md  动态状态 ≤200 行：front matter 必填 next / accept；决定标 [user|proven|agent|open]',
     '  fork.md   可选：要并行就按 _fork.example.md 写，每条 lane 一个子交接',
-    p.kind === 'join' ? '  先合并各 lane 分支（git merge），再写汇合后的 state.md' : '',
+    ...(p.kind === 'join' ? ['  先合并各 lane 分支（git merge），再写汇合后的 state.md'] : []),
     '然后运行：handoff seal',
   );
   if (p.fresh.length) out.push('', '## 新增原话', '', voice(p.fresh.slice(-VOICE_PREVIEW), 300));
-  return out.filter(l => l !== '').join('\n').replace(/\n## /g, '\n\n## ');
+  return out.join('\n');
 }
 
 export function sealed(s: Sealed): string {
@@ -113,7 +113,9 @@ export function card(views: readonly SealView[], here: number | null, goal: stri
   const live = views.filter(v => v.status !== 'done');
   if (!live.length) return '';
   const first = [...live].sort((a, b) => Number(b.manifest.id === here) - Number(a.manifest.id === here) || b.manifest.id - a.manifest.id);
-  const lines = [`[handoff] 本仓库有 ${live.length} 个未接续的交接${goal ? `；目标：${goal}` : ''}`];
+  const brief = goal?.replace(/\[v\d+\.\d+\]/g, '').trim();
+  const shown = brief && brief.length > 60 ? `${brief.slice(0, 60)}…` : brief;
+  const lines = [`[handoff] 本仓库有 ${live.length} 个未接续的交接${shown ? `；目标：${shown}` : ''}`];
   for (const v of first.slice(0, 3)) {
     const m = v.manifest;
     const state = v.status === 'open' ? '待接手' : `进行中（${v.claim?.agent ?? '?'}）`;

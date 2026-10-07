@@ -32,7 +32,9 @@ export async function load(ctx: Ctx, n: number | null, alreadyClaimed = false): 
   const id = n ?? ctx.desk.head();
   if (id === null) throw new Error('要接手哪个交接？用法：handoff load <编号>（handoff ls 查看全部）');
   const bundle = await ctx.store.bundle(id);
-  const previous = alreadyClaimed ? null : (await ctx.store.claim(id, claimant(ctx, null, null), true)).previous;
+  const claimed = alreadyClaimed ? { ok: true, previous: null } : await ctx.store.claim(id, claimant(ctx, null, null), true);
+  if (!claimed.ok) throw new Error(`#${id} 刚被 ${claimed.previous?.agent ?? '另一个会话'} 认领（${claimed.previous?.at ?? ''}）；确实要接手就重试`);
+  const previous = claimed.previous;
   const reconcile = await reconcileWith(ctx, bundle.manifest);
   ctx.desk.setHead(id);
 

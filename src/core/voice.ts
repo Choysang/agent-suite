@@ -2,7 +2,8 @@
 
 import type { RawTurn, Turn } from './types.ts';
 
-const ID = /\bv(\d+)\.(\d+)\b/g;
+/** A citation is always bracketed, `[v7.3]`, so version strings like `v24.1` never count. */
+const CITE = /\[(v\d+\.\d+)\]/g;
 
 export interface Scope {
   /** Turns older than this belong to earlier seals; null means "no lower bound". */
@@ -51,12 +52,12 @@ export function render(turns: readonly Turn[], clip = Infinity): string {
 
 /** Every `vN.K` cited in a text. */
 export function citations(text: string): string[] {
-  return [...text.matchAll(ID)].map(m => m[0]);
+  return [...text.matchAll(CITE)].map(m => m[1]!);
 }
 
-/** Rewrite ids born in seal `from` as born in seal `to`; used when a seal number is lost to a race. */
+/** Rewrite citations born in seal `from` as born in seal `to`; used when a seal number is lost to a race. */
 export function renumber(text: string, from: number, to: number): string {
-  return text.replace(new RegExp(`\\bv${from}\\.(\\d+)\\b`, 'g'), `v${to}.$1`);
+  return from === to ? text : text.replace(new RegExp(`\\[v${from}\\.(\\d+)\\]`, 'g'), `[v${to}.$1]`);
 }
 
 /** Local `YYYY-MM-DD HH:mm`. */

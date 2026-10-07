@@ -183,3 +183,21 @@ test('take hands each worker a different open seal', async () => {
   assert.deepEqual([first.manifest.id, second.manifest.id].sort(), [2, 3]);
   await assert.rejects(take(await context(dir)), /没有待接手/);
 });
+
+test('recalled voice is used only without transcripts, and is not re-imported by the next relay', async () => {
+  const dir = repo();
+  const ctx = await context(dir);
+  await prepare(ctx);
+  write(ctx, {});
+  ctx.desk.write('recalled.md', '先做存储层\n\n界面用中文\n');
+  const first = await seal(ctx);
+  assert.equal(first.manifest.source.voice, 'recalled');
+  assert.equal(first.fresh, 2);
+
+  await prepare(ctx);
+  write(ctx, { state: state('做界面') });
+  ctx.desk.write('recalled.md', '先做存储层\n\n界面用中文\n\n加一个导出按钮\n');
+  const second = await seal(ctx);
+  assert.equal(second.fresh, 1);
+  assert.equal(second.voice, 3);
+});

@@ -5,7 +5,7 @@ import { basename, dirname, join } from 'node:path';
 import { board, nextId } from '../core/dag.ts';
 import { clean, front, lanes as parseLanes, validate, type Draft } from '../core/draft.ts';
 import { FILES, PROTOCOL, type LaneTask, type Manifest, type RawTurn, type Turn, type VoiceMode } from '../core/types.ts';
-import { numbered, renumber, toJsonl } from '../core/voice.ts';
+import { delta, numbered, renumber, toJsonl } from '../core/voice.ts';
 import type { FileIn } from '../ports.ts';
 import { capture, ledger } from './capture.ts';
 import { isoLocal, type Ctx } from './context.ts';
@@ -43,21 +43,26 @@ export async function seal(ctx: Ctx): Promise<Sealed> {
     recalled: ctx.desk.read('recalled.md'),
   };
 
+  // The next seal's cutoff is this instant: anything said after it belongs to the next seal.
+  const created = isoLocal(ctx.now());
   const parents = await Promise.all(meta.parents.map(p => ctx.store.bundle(p)));
   const cap = await capture(ctx, parents);
-  const recalled = cap.source.voice === 'none' && draft.recalled?.trim() ? recollect(draft.recalled, ctx.now()) : [];
+  const known = new Set(cap.known.map(t => t.key));
+  const recollected = cap.source.voice === 'none' && draft.recalled?.trim() ? recollect(draft.recalled, ctx.now()) : [];
+  const recalled = delta(recollected, known, { cutoff: null, session: null });
   const voiceMode: VoiceMode = recalled.length ? 'recalled' : cap.source.voice;
   const turns = recalled.length ? recalled : cap.fresh;
 
   const ids = new Set([...cap.known, ...numbered(meta.n, turns)].map(t => t.id));
   const problems = validate(draft, ids);
-  const lanes = draft.fork?.trim() ? parseLanes(draft.fork) : [];
+  const forking = Boolean(draft.fork?.trim()) && parseLanes(draft.fork!).length > 0;
   const snap = await ctx.ws.snapshot();
-  if (lanes.length && snap.dirty) problems.push('分叉前先提交：lane 从 HEAD 开分支，未提交的改动带不过去');
+  const head = await ctx.ws.head();
+  if (forking && snap.dirty) problems.push('分叉前先提交：lane 从 HEAD 开分支，未提交的改动带不过去');
+  if (forking && !head) problems.push('分叉需要至少一个提交');
   if (problems.length) throw new DraftError(problems);
 
   const branch = await ctx.ws.branch();
-  const head = await ctx.ws.head();
   const ledgerText = await ledger(ctx, parents[0]?.manifest.repo.head ?? null);
   const laneMd = parents.length === 1 && parents[0]!.manifest.lane === branch ? parents[0]!.files.get(FILES.lane) : undefined;
 
@@ -73,7 +78,7 @@ export async function seal(ctx: Ctx): Promise<Sealed> {
       repo: { branch, head, dirty: snap.dirty, wip: snap.commit ? `refs/handoff/wip/${n}` : null, skipped: snap.skipped },
       source: { ...cap.source, voice: voiceMode },
       lane: branch,
-      created: isoLocal(ctx.now()),
+      created,
       next,
       accept,
       owns: [],
@@ -92,10 +97,11 @@ export async function seal(ctx: Ctx): Promise<Sealed> {
 
   const sealed = await allocate(ctx, meta.n, n => make(n), meta.parents, m => `handoff #${m.id} ${m.kind}: ${m.next}`);
   if (snap.commit) await ctx.store.keep(sealed.manifest.id, snap.commit);
-  const children = lanes.length ? await fork(ctx, sealed.manifest, lanes) : [];
-
+  // The parent is sealed: retire the draft now, so a failing lane can never cause a duplicate seal.
   ctx.desk.clear();
   ctx.desk.setHead(sealed.manifest.id);
+  const lanes = forking ? parseLanes(renumber(draft.fork!, meta.n, sealed.manifest.id)) : [];
+  const children = lanes.length ? await fork(ctx, sealed.manifest, lanes) : [];
   return { manifest: sealed.manifest, fresh: sealed.fresh.length, voice: cap.known.length + sealed.fresh.length, lanes: children };
 }
 
@@ -113,7 +119,6 @@ async function fork(ctx: Ctx, parent: Manifest, lanes: readonly LaneTask[]): Pro
         parents: [parent.id],
         repo: { ...parent.repo, dirty: false, wip: null },
         lane: `lane/${n}-${lane.name}`,
-        created: isoLocal(ctx.now()),
         next: lane.next,
         accept: lane.accept,
         owns: lane.owns,

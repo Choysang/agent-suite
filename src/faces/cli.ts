@@ -29,7 +29,7 @@ const HELP = `handoff — 跨 Agent 会话接力
 
 async function main(argv: string[]): Promise<number> {
   const { values, positionals } = parseArgs({
-    args: argv,
+    args: withoutEmptySession(argv),
     allowPositionals: true,
     options: {
       session: { type: 'string' },
@@ -107,14 +107,20 @@ function resolveRef(ref: string): { n: number; root: string | undefined } {
   return { n: Number(m[2]), root };
 }
 
+/** Hosts that do not expand `${CLAUDE_SESSION_ID}` may pass `--session` with nothing after it. */
+function withoutEmptySession(argv: string[]): string[] {
+  return argv.flatMap((a, i) => (a === '--session' && (argv[i + 1] === undefined || argv[i + 1]!.startsWith('-')) ? [] : [a]));
+}
+
 /** In Codex the skill's `${CLAUDE_SESSION_ID}` stays unexpanded; treat that as no hint. */
 function sessionHint(raw: string | undefined): string | null {
   return raw && !raw.includes('$') && !raw.includes('{') ? raw : null;
 }
 
+/** Codex first: an agent launched from inside Claude Code inherits Claude's variables, never the reverse here. */
 function agentHint(): string | null {
-  if (process.env.CLAUDECODE || process.env.CLAUDE_CODE_ENTRYPOINT) return 'claude-code';
   if (Object.keys(process.env).some(k => k.startsWith('CODEX_'))) return 'codex';
+  if (process.env.CLAUDECODE || process.env.CLAUDE_CODE_ENTRYPOINT) return 'claude-code';
   return null;
 }
 

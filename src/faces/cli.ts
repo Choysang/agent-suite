@@ -8,6 +8,7 @@ import { load, take } from '../kernel/load.ts';
 import { join, prepare, views } from '../kernel/prepare.ts';
 import { DraftError, seal } from '../kernel/seal.ts';
 import { PARTS, show, showTurn, type Part } from '../kernel/show.ts';
+import { caller } from '../agents.ts';
 import { registry, wire } from '../wire.ts';
 import { install } from './install.ts';
 import { card, loaded, prepared, sealed, table } from './render.ts';
@@ -39,7 +40,7 @@ async function main(argv: string[]): Promise<number> {
     },
   });
   const [command = 'ls', ...rest] = positionals;
-  const hint = { session: sessionHint(values.session), agent: agentHint() };
+  const hint = { session: sessionHint(values.session), agent: caller() };
   const at = (cwd = process.cwd()) => wire(cwd, hint);
 
   if (values.help || command === 'help') return say(HELP);
@@ -89,7 +90,8 @@ async function main(argv: string[]): Promise<number> {
       const latest = all.find(v => v.status !== 'done');
       const brief = latest ? await (await ctx.store.bundle(latest.manifest.id)).text('brief.md') : null;
       const out = card(all, here, brief ? goal(brief) : null, ctx.now());
-      if (out) process.stdout.write(out + '\n');
+      // JSON additionalContext is the one SessionStart format Claude Code, Codex and CodeBuddy all accept.
+      if (out) process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: out } }) + '\n');
     } catch {
       // A broken hook must never get in the way of starting a session.
     }
@@ -117,12 +119,6 @@ function sessionHint(raw: string | undefined): string | null {
   return raw && !raw.includes('$') && !raw.includes('{') ? raw : null;
 }
 
-/** Codex first: an agent launched from inside Claude Code inherits Claude's variables, never the reverse here. */
-function agentHint(): string | null {
-  if (Object.keys(process.env).some(k => k.startsWith('CODEX_'))) return 'codex';
-  if (process.env.CLAUDECODE || process.env.CLAUDE_CODE_ENTRYPOINT) return 'claude-code';
-  return null;
-}
 
 function int(s: string): number {
   const n = Number(s.replace(/^#/, ''));

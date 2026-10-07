@@ -32,7 +32,22 @@ npm link
 handoff install
 ```
 
-`handoff install` 做三件事：把 `skill/` 以目录链接装进 `~/.claude/skills/handoff` 与 `~/.codex/skills/handoff`；在 `~/.claude/settings.json` 与 `~/.codex/config.toml` 注册 SessionStart hook（仓库有未接续的交接时，新会话开头自动出现一张 ≤5 行的路由卡）。重复运行无副作用。
+`handoff install` 自动发现本机装了哪些 Agent，对每一个：把 `skill/` 以目录链接装进它的 skills 目录，并注册 SessionStart hook（仓库有未接续的交接时，新会话开头出现一张 ≤5 行的路由卡）。重复运行无副作用；已有的同名 skill 会先移到旁边备份。
+
+| Agent | 配置目录（可用环境变量覆盖） | 原话来源 | skill | hook |
+|---|---|---|---|---|
+| Claude Code | `~/.claude`（`CLAUDE_CONFIG_DIR`） | `projects/*/<会话>.jsonl` | 实测 | 实测 |
+| Codex | `~/.codex`（`CODEX_HOME`） | `sessions/YYYY/MM/DD/rollout-*.jsonl` | 实测 | 按文档 |
+| WorkBuddy | `~/.workbuddy-ai`（`WORKBUDDY_CONFIG_DIR`） | `projects/*/<会话>.jsonl` 的 `<user_query>` | 已安装，未在应用内实测 | 已注册，未实测 |
+| CodeBuddy CLI | `~/.codebuddy`（`CODEBUDDY_CONFIG_DIR`） | 同 WorkBuddy | 已安装 | 已注册 |
+
+Codex 注意：Windows 上 workspace-write 沙箱禁止 Node 创建子进程（`spawn EPERM`），需在完全访问模式下使用。
+
+### 接入新的 Agent
+
+1. `src/agents.ts` 加一行：名字、配置目录、原话格式、settings 文件格式。
+2. 原话格式是新的：在 `src/adapters/` 写一个 `TranscriptSource`，在 `protocol/fixtures/` 放 `<agent>.jsonl` + `<agent>.expect.json` 并加进 `test/transcripts.test.ts`。
+3. 不支持 skill 的 Agent：在它的规则文件（AGENTS.md 之类）加一行「用户说 /handoff 时，读 <本仓库>/skill/SKILL.md 照做」。没有原话适配时，Agent 按 SKILL 把原话写进 `recalled.md`，照样能用。
 
 ## 用法
 

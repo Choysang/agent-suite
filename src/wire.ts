@@ -4,11 +4,14 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ClaudeTranscripts } from './adapters/claude.ts';
+import { CodeBuddyTranscripts } from './adapters/codebuddy.ts';
 import { CodexTranscripts } from './adapters/codex.ts';
 import { FsDesk } from './adapters/desk.ts';
 import { GitStore, GitWorkspace } from './adapters/git.ts';
 import { FileRegistry } from './adapters/registry.ts';
+import { agents, type Agent } from './agents.ts';
 import type { Ctx, Templates } from './kernel/context.ts';
+import type { TranscriptSource } from './ports.ts';
 
 export const HOME = process.env.HANDOFF_HOME ?? join(homedir(), '.handoff');
 export const PROTOCOL_DIR = join(import.meta.dirname, '..', 'protocol');
@@ -22,15 +25,25 @@ export function templates(): Templates {
   return { brief: read('brief.md'), state: read('state.md'), fork: read('fork.md') };
 }
 
+export function transcripts(agent: Agent): TranscriptSource {
+  const root = join(agent.home, agent.sessions);
+  switch (agent.transcripts) {
+    case 'claude':
+      return new ClaudeTranscripts(root);
+    case 'codex':
+      return new CodexTranscripts(root);
+    case 'codebuddy':
+      return new CodeBuddyTranscripts(agent.name, root);
+  }
+}
+
 export async function wire(cwd: string, hint: Ctx['hint']): Promise<Ctx> {
   const ws = await GitWorkspace.open(cwd);
   if (!ws) throw new Error(`不在 git 仓库里：${cwd}（handoff 把交接存在 git 引用中；先 git init）`);
-  const claude = process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude');
-  const codex = process.env.CODEX_HOME ?? join(homedir(), '.codex');
   return {
     ws,
     store: new GitStore(ws.repo),
-    sources: [new ClaudeTranscripts(join(claude, 'projects')), new CodexTranscripts(join(codex, 'sessions'))],
+    sources: agents().map(transcripts),
     desk: new FsDesk(ws.root),
     deskAt: root => new FsDesk(root),
     registry: registry(),

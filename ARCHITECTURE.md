@@ -28,7 +28,8 @@ Agent 的上下文窗口是易逝的。handoff 把一次会话拆成两类东西
    │
  core      types · voice · draft · dag   （纯函数，零 IO）
 
- adapters  git（Store + Workspace）· claude · codex（TranscriptSource）· desk · registry
+ adapters  git（Store + Workspace）· claude · codex · codebuddy（TranscriptSource）· desk · registry
+ agents.ts Agent 注册表：每个 Agent 一行，驱动原话读取与安装
  wire.ts   组装根：唯一知道哪个适配器接哪个端口的地方
 ```
 
@@ -108,6 +109,6 @@ handoff 不是入库流程。交接是**项目自己的工作记录**，沉淀�
 
 ## 9. 扩展点
 
-- 新 Agent 的原话：实现 `TranscriptSource`（一个文件），加进 `wire.ts`，在 `protocol/fixtures/` 放一份夹具。
+- 新 Agent：`src/agents.ts` 加一行（同时驱动原话读取与安装）；原话格式是新的，就实现一个 `TranscriptSource` 并放一份夹具。
 - 新的存储（例如共享服务）：实现 `Store`。
 - 新的入口（例如 MCP）：在 `faces/` 加一个文件，调用同一组 kernel 用例。

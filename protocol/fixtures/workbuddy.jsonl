@@ -1,0 +1,6 @@
+{"type": "session-meta", "id": "meta1", "sessionId": "sess-1", "timestamp": 1791377765786, "meta": {"codebuddy.ai/hostKind": "unopted"}}
+{"id": "m1", "timestamp": 1791377766786, "type": "message", "role": "user", "sessionId": "sess-1", "cwd": "D:\\work\\app", "content": [{"type": "input_text", "text": "<system-reminder data-role=\"user-context\">\n<user_info>\nOS Version: win32\n</user_info>\n</system-reminder>\n<user_query>请帮我做个待办应用</user_query>"}], "providerData": {"agent": "cli"}}
+{"id": "a1", "timestamp": 1791377767786, "type": "message", "role": "assistant", "sessionId": "sess-1", "cwd": "D:\\work\\app", "content": [{"type": "output_text", "text": "ok"}], "providerData": {"model": "deepseek-v4.1-flash"}}
+{"id": "f1", "timestamp": 1791377768286, "type": "function_call", "sessionId": "sess-1", "cwd": "D:\\work\\app", "name": "Bash"}
+{"id": "m2", "timestamp": 1791377768786, "type": "message", "role": "user", "sessionId": "sess-1", "cwd": "D:\\work\\app", "content": [{"type": "input_text", "text": "<task-notification>\n<task-id>x</task-id>\n</task-notification>"}]}
+{"id": "m3", "timestamp": 1791377769786, "type": "message", "role": "user", "sessionId": "sess-1", "cwd": "D:\\work\\app", "content": [{"type": "input_text", "text": "继续"}]}

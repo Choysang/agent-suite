@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { ClaudeTranscripts } from '../src/adapters/claude.ts';
+import { CodeBuddyTranscripts } from '../src/adapters/codebuddy.ts';
 import { CodexTranscripts } from '../src/adapters/codex.ts';
 import { tempDir } from './helpers.ts';
 
@@ -19,6 +20,7 @@ interface Expect {
 for (const [agent, layout] of [
   ['claude', (root: string) => join(root, 'D--work-app', 'sess-1.jsonl')],
   ['codex', (root: string) => join(root, '2026', '10', '07', 'rollout-2026-10-07T16-00-00-sess-1.jsonl')],
+  ['workbuddy', (root: string) => join(root, 'd-work-app', 'sess-1.jsonl')],
 ] as const) {
   test(`${agent} transcripts yield only the user's words`, async () => {
     const root = tempDir(`handoff-${agent}-`);
@@ -27,7 +29,8 @@ for (const [agent, layout] of [
     writeFileSync(path, readFileSync(join(FIXTURES, `${agent}.jsonl`), 'utf8'));
     const want = JSON.parse(readFileSync(join(FIXTURES, `${agent}.expect.json`), 'utf8')) as Expect;
 
-    const source = agent === 'claude' ? new ClaudeTranscripts(root) : new CodexTranscripts(root);
+    const source =
+      agent === 'claude' ? new ClaudeTranscripts(root) : agent === 'codex' ? new CodexTranscripts(root) : new CodeBuddyTranscripts(agent, root);
     const [session, ...rest] = await source.sessions(Date.parse('2026-10-01T00:00:00Z'));
     assert.equal(rest.length, 0);
     assert.equal(session?.cwd, want.cwd);

@@ -12,6 +12,7 @@ import { caller } from '../agents.ts';
 import { registry, wire } from '../wire.ts';
 import { install } from './install.ts';
 import { card, loaded, prepared, sealed, table } from './render.ts';
+import { startServer } from './server.ts';
 
 const HELP = `handoff — 跨 Agent 会话接力
 
@@ -22,9 +23,11 @@ const HELP = `handoff — 跨 Agent 会话接力
   handoff take                 原子认领最早的待接手交接并载入（并行 worker 用）
   handoff join N...            起草汇合：N 为分叉点或各 lane 末端
   handoff ls [--json]          看板
-  handoff show N [${PARTS.join('|')}]
+  handoff show N [\${PARTS.join('|')}]
   handoff show vN.K            一条原话全文
   handoff sync [remote]        推送并拉取 refs/handoff/*
+  handoff ui [--port N]        启动可视化 Cognitive Mission Control 网页控制台
+  handoff serve [--port N]     启动无头 Mesh HTTP/SSE/A2A 服务
   handoff install              安装 skill（Claude Code、Codex）与 SessionStart hook
   通用选项：--session <id>     调用方会话 id（Claude Code skill 自动传入）`;
 
@@ -35,6 +38,7 @@ async function main(argv: string[]): Promise<number> {
     options: {
       session: { type: 'string' },
       parent: { type: 'string' },
+      port: { type: 'string' },
       json: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -71,6 +75,20 @@ async function main(argv: string[]): Promise<number> {
     }
     case 'sync':
       return say(await (await at()).store.sync(rest[0] ?? 'origin'));
+    case 'ui': {
+      const port = values.port ? Number(values.port) : undefined;
+      const { port: p } = await startServer({ port, openBrowser: true });
+      process.stdout.write(`Cognitive Mission Control 已启动: http://localhost:${p}\n按 Ctrl+C 退出\n`);
+      await new Promise(() => {});
+      return 0;
+    }
+    case 'serve': {
+      const port = values.port ? Number(values.port) : undefined;
+      const { port: p } = await startServer({ port, openBrowser: false });
+      process.stdout.write(`Handoff Mesh Server 运行中: http://localhost:${p}\n`);
+      await new Promise(() => {});
+      return 0;
+    }
     case 'hook':
       return hook();
     case 'install':

@@ -1,0 +1,30 @@
+# 路由注册表：知识库唯一的标签词表（受控词表）。
+# 卡片 frontmatter 的 tags 只能写这里登记的「域/主题」，例如 web/框架与测试。
+# 改完运行 kb build（生成 ROUTER.md 与 30.Wiki/routes/）。
+# 这是示例：把你自己的域、命中词、红线写进来。
+
+# 一个域的条目数超过这个值，二级路由页只列主题，每个主题拆出三级页面。
+split_threshold: 40
+
+domains:
+  web:
+    name: Web 开发
+    keywords: [Next.js, React, bun, Node, 前端, 后端, 测试, 部署]
+    redline: "接口返回必须校验状态码；锁版本再升级；测试断言看实际产出"
+    topics:
+      框架与测试: [Next.js, React, bun, 集成测试]
+      数据与接口: [API, 数据库, 迁移, 缓存]
+  ops:
+    name: 运维与工具链
+    keywords: [docker, compose, SSH, git, PowerShell, 脚本, 自动化]
+    redline: "生产环境只 pull 不 build；密码不落盘；提交前查大文件"
+    topics:
+      发布部署: [docker, compose, 镜像, 回滚]
+      本机环境: [PowerShell, 路径, 编码, 行尾]
+  ai:
+    name: AI 与 Agent
+    keywords: [LLM, Agent, 提示词, 知识库, 记忆, token, MCP, skill]
+    redline: "LLM 只出判断，分数和排名由确定性代码算；常驻上下文只放路由"
+    topics:
+      知识库与记忆: [路由, 知识库, 第二大脑, 记忆, LLM Wiki]
+      提示词与工作流: [prompt, 工作流, 子代理]

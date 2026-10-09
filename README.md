@@ -1,4 +1,4 @@
-# 🚀 Agent Workflow Suite (智能体全流程协同与认知系统)
+# 🚀 agent-suite (智能体全流程协同与认知套件)
 
 > **让你的 AI 编程助手具备「统一的纪律」、「无损的接力记忆」与「可复利的第二大脑」。**  
 > 本项目整合了三个核心开源理念的精华：**行动指南 (Guidelines)** + **会话接力 (Handoff)** + **第二大脑知识库 (Obsidian-Wiki-llm)**，提供了一套面向个人开发者与团队的**开箱即用 Agent 工作流分享与实战工具包**。
@@ -43,7 +43,7 @@
 本项目为你准备好了**全套保姆级指南、各 Agent 配置文件模板与开箱即用的技能工具包**：
 
 ```
-agent-workflow-suite/
+agent-suite/
 ├── docs/                                # 📖 深度进阶文档与全流程实操指南
 │   ├── 01-agent-guidelines.md           # 模块一：不同 Agent 的行动指南与配置详解
 │   ├── 02-session-handoff.md            # 模块二：各个会话交接手 (Handoff 无损换模型实战)

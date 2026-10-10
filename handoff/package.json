@@ -1,0 +1,21 @@
+{
+  "name": "handoff",
+  "version": "1.0.0",
+  "description": "Cross-agent session relay. Seal a session into a number; continue it in any agent.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "handoff": "src/faces/cli.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "check": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
+  }
+}

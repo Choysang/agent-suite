@@ -19,11 +19,11 @@
 改完提交到 `main`。知识库和交接工具的测试通过后，给需要发布的提交打版本标签并推送：
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
-`v1.0.1` 是后续版本的示例。`.github/workflows/release.yml` 会先跑测试，再从该标签的三个目录分别生成 `guidelines.zip`、`knowledge.zip`、`handoff.zip`，附带 `SHA256SUMS`，发布到 GitHub Releases。打包只读取 Git 已提交内容。
+`v1.0.2` 是后续版本的示例。`.github/workflows/release.yml` 会先跑测试，再从该标签的三个目录分别生成 `guidelines.zip`、`knowledge.zip`、`handoff.zip`，附带 `SHA256SUMS`，发布到 GitHub Releases。打包只读取 Git 已提交内容。
 
 README 的下载链接始终指向最近一次正式发布。提交源码后需要发布版本，下载包才会更新；Git 用户可直接拉取源码。
 

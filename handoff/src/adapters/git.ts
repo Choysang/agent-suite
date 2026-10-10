@@ -34,12 +34,16 @@ export class Git {
       });
       const out: Buffer[] = [];
       const err: Buffer[] = [];
+      // A rejected command can close stdin early; preserve its exit status and stderr.
+      let inputError: Error | null = null;
+      child.stdin.on('error', (error: Error) => { inputError = error; });
       child.stdout.on('data', (b: Buffer) => out.push(b));
       child.stderr.on('data', (b: Buffer) => err.push(b));
       child.on('error', fail);
       child.on('close', code => {
         const result = { code: code ?? 1, out: Buffer.concat(out), err: Buffer.concat(err).toString('utf8') };
-        if ((opts.ok ?? (c => c === 0))(result.code)) done(result);
+        if (result.code === 0 && inputError) fail(inputError);
+        else if ((opts.ok ?? (c => c === 0))(result.code)) done(result);
         else fail(new Error(`git ${args.join(' ')}: ${result.err.trim() || `exit ${result.code}`}`));
       });
       child.stdin.end(opts.input ?? '');

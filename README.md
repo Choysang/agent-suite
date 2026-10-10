@@ -1,125 +1,72 @@
-# ⚡ agent-suite
+# agent-suite
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Agent_Skills-Collection-00f2fe?style=for-the-badge" alt="Agent Skills" />
-  <img src="https://img.shields.io/badge/Supports-Claude_Code_|_Codex_|_Cursor_|_Antigravity-4facfe?style=for-the-badge" alt="Supports" />
-  <img src="https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge" alt="License" />
-</p>
+我把自己使用的 Agent 工作指南、知识入库方法和会话交接工具整理在这里，方便大家一起用。
 
-<p align="center">
-  <strong>面向现代 AI 编程助手的 Agent Skill / 方法合集。即插即用，赋予你的 Agent 严谨的工程纪律、无损的接力记忆与持续复利的知识沉淀能力。</strong>
-</p>
+你可以用这套方法约定 Agent 的工作方式，把文章和经验存进知识库，并在换会话时继续之前的任务。仓库里放的是 Skills、规则模板和使用说明，按需要选用即可。
 
----
+## 这套方法分三部分
 
-## 🔗 关联上游项目 (Upstream Projects)
+### 1. 工作指南
 
-本项目是以下三个核心开源项目的 **Skill / 方法合集统一实现**。每个 Skill 均深度绑定并驱动这三个底座：
+给 Agent 约定做事方式：核实事实、保留已有工作、只改与任务有关的内容，并如实说明做了什么、哪些还没验证。
 
-| 项目 | 定位与核心价值 | 驱动的 Skills |
+不同 Agent 可以选择对应的规则版本。配置后让规则随任务加载，也可以用 [guidelines](skills/guidelines/SKILL.md) 在具体任务里提醒它：“按工作指南处理这个任务”。
+
+### 2. 知识库
+
+把文章、工具、排查经验和项目复盘存进本地知识库，遇到类似任务时再查阅。下面这些都是知识库里的功能，分别负责收资料、记经验、检索和日常维护：
+
+| 知识库功能 | 用来做什么 | 可以怎么说 |
 |---|---|---|
-| 📜 **[agent-working-guidelines](https://github.com/Choysang/agent-working-guidelines)** | **行为准则与工程纪律**：明确代码质量红线、实测第一、微创切口防破坏性重构 | [`guidelines`](skills/guidelines/) |
-| 🔄 **[handoff](https://github.com/Choysang/handoff)** | **跨会话接力与多工作区**：基于 Git 原生事件溯源的秒级无损接力、并行 Worktree 泳道 | [`handoff`](skills/handoff/) |
-| 🧠 **[Obsidian-Wiki-llm](https://github.com/Choysang/Obsidian-Wiki-llm)** | **第二大脑知识库**：Karpathy LLM-Wiki 范式、多通道入库、L0–L2 渐进式路由 | [`capture`](skills/capture/)、[`sink`](skills/sink/)、[`kb`](skills/kb/)、[`daily`](skills/daily/)、[`tidy`](skills/tidy/) |
+| [capture · 收资料](skills/capture/SKILL.md) | 收录文章、GitHub 项目、网页剪藏或粘贴的文字 | “存一下这个链接”“处理一下剪藏” |
+| [sink · 记经验](skills/sink/SKILL.md) | 问题解决后记录做法和适用条件；项目结束后整理复盘 | “沉淀一下刚才的经验”“复盘这个项目” |
+| [kb · 查找与维护](skills/kb/SKILL.md) | 查以前的经验和资料，检查卡片、更新知识目录 | “查查知识库里有没有类似问题” |
+| [daily · 开工与待办](skills/daily/SKILL.md) | 看待办、记录完成事项和当天的工作 | “开工”“加个待办”“这件事完成了” |
+| [tidy · 整理知识库](skills/tidy/SKILL.md) | 处理收件箱、合并重复内容、检查断链和过时记录 | “整理一下知识库” |
 
----
+知识库用 Markdown 文件保存内容，可以用 Obsidian 查看。`capture` 收外部资料，`sink` 记自己的经验，`kb` 帮助以后找到它们；`daily` 和 `tidy` 按需要使用。
 
-## 🛠️ 技能合集清单 (Skills Catalog)
+### 3. 会话交接
 
-所有方法均封装为符合业界标准的 **Agent Skill（`skills/<name>/SKILL.md`）**，支持直接软链或挂载至任意支持 Skill 规范的运行时：
+一个任务还没做完，需要换会话或换 Agent 时，用 [handoff](skills/handoff/SKILL.md) 保存目标、进度、重要决定和下一步。
 
-| Skill 标识 | 中文名称 | 核心能力 (做什么 → 得到什么) | 触发方式 / 口令 | 关联项目 |
-|---|---|---|---|---|
-| [`guidelines`](skills/guidelines/) | **行动准则** | 约束 AI 行为：实测第一、外科手术式微创修改、拒绝幻觉与无关重构 | 默认常驻 / 执行前自检 | `agent-working-guidelines` |
-| [`handoff`](skills/handoff/) | **会话接力** | 封存当前会话与未提交代码快照；换模型或新窗口输入编号秒级无损接棒 | `/handoff`、`$handoff` | `handoff` |
-| [`capture`](skills/capture/) | **知识入库** | 收录外部 GitHub 仓库、深度文章链接、网页剪藏或聊天粘贴文本，查重写卡 | “存一下这个”、“处理剪藏” | `Obsidian-Wiki-llm` |
-| [`sink`](skills/sink/) | **经验沉淀** | 排查搞定复杂 Bug 后沉淀单场景经验卡；项目收尾时提炼完整 Playbook 档案 | “沉淀经验”、“复盘” | `Obsidian-Wiki-llm` |
-| [`kb`](skills/kb/) | **知识引擎** | 知识库校验、关键词/BM25 检索，自动编译 L0 渐进式全局路由表 (`ROUTER.md`) | `kb build`、`kb find` | `Obsidian-Wiki-llm` |
-| [`daily`](skills/daily/) | **工作流日志** | 晨间开工任务检索、待办推进与自动生成结构化工作日志 | “开工”、“今天有什么” | `Obsidian-Wiki-llm` |
-| [`tidy`](skills/tidy/) | **知识库整理** | 知识库同类卡片吸收合并（补充/细化/更优/冲突标记）、过期待办归档 | “整理知识库”、“tidy” | `Obsidian-Wiki-llm` |
+在当前会话输入 `/handoff`，拿到编号后，在新会话输入 `/handoff 7` 接手。Codex 对应使用 `$handoff` 和 `$handoff 7`。这里的 `7` 换成实际返回的编号，新会话需要能访问对应项目的交接记录。
 
----
+交接记录帮助当前任务继续；其中值得以后复用的经验，再通过知识库的 `sink` 保存。
 
-## 🚀 极速安装与挂载 (Installation)
+## 怎么开始
 
-克隆本项目到本地任意目录：
-```bash
-git clone https://github.com/Choysang/agent-suite.git
-cd agent-suite
+可以先用工作指南。经常做长任务，就加上会话交接；想积累资料和经验，再配置知识库。
+
+把下面这段发给能读写本地文件、执行命令的 Agent：
+
+```text
+帮我配置 https://github.com/Choysang/agent-suite。
+先读 README 和 docs/00-quickstart.md，按我当前使用的 Agent 配置需要的部分。
+把工作指南合并到已有规则中，保留原来的项目要求和已安装技能。
+如果要用知识入库，先确认我的知识库目录；如果要用会话交接，检查 handoff 命令是否已安装。
 ```
 
-### 1. 挂载到 Claude Code
-将技能目录软链接到 Claude Code 的全局 Skills 目录：
-```bash
-# Linux / macOS
-mkdir -p ~/.claude/skills
-ln -s "$(pwd)/skills/"* ~/.claude/skills/
+会话交接需要另装 `handoff` 工具，知识入库需要配置本地知识库和 Python 环境。详细步骤见 [入门配置](docs/00-quickstart.md)。
 
-# Windows (PowerShell)
-Get-ChildItem -Path ".\skills" | ForEach-Object {
-    New-Item -ItemType Junction -Path "$HOME\.claude\skills\$($_.Name)" -Target $_.FullName -Force
-}
-```
-*提示：同时可将 `templates/agents/CLAUDE.md` 拷贝到 `~/.claude/` 享受默认常驻准则。*
+## 一次任务怎么串起来
 
-### 2. 挂载到 OpenAI Codex
-```bash
-# 软链到 ~/.codex/skills/
-mkdir -p ~/.codex/skills
-ln -s "$(pwd)/skills/"* ~/.codex/skills/
-```
+比如让 Agent 修复一个问题：
 
-### 3. 挂载到 Antigravity / Gemini
-软链至当前项目的 `.agents/skills/` 或用户全局目录 `~/.gemini/antigravity/skills/` 即可被 Agent 自动识别。
+1. 开始前，按工作指南确认目标，并查知识库里有没有相关经验。配置好读取入口后，Agent 可以先看 `ROUTER.md` 这个知识目录，再读与任务有关的卡片。
+2. 查到有用的文章或项目，把链接发给 Agent，说“存一下”。
+3. 问题解决后，说“沉淀一下刚才的排查经验”，留下做法、证据和适用条件。
+4. 需要换会话时，用 `handoff` 保存进度。在能访问同一项目交接记录的新会话里，输入返回的编号，核对现场后继续。
+5. 项目结束后，说“复盘这个项目”，整理成以后可以参考的项目档案。
 
-### 4. 在 Cursor / Windsurf 中使用
-对于暂未原生支持 Skills 规范的 IDE 助手，直接将 `templates/agents/.cursorrules` 复制到项目根目录即可直接激活全部行为规范。
+下次遇到类似任务，Agent 就能从知识库里查到这些资料和经验。
 
----
+## 三个原项目
 
-## 💡 典型工作流协同场景
+本仓库把三个项目的使用方法串在一起，具体实现和完整说明可以到原项目查看：
 
-当各个 Skill 组合使用时，将形成极度丝滑的开发闭环：
+- [agent-working-guidelines](https://github.com/Choysang/agent-working-guidelines)：Agent 的工作原则，提供 Codex、Claude 账号和通用版本。
+- [Obsidian-Wiki-llm](https://github.com/Choysang/Obsidian-Wiki-llm)：用 Markdown 卡片积累资料和经验，让 Agent 按任务查阅、入库和整理。
+- [handoff](https://github.com/Choysang/handoff)：保存和接手会话的命令行工具，也包含并行任务的交接方法。
 
-```
-                    【一次典型的日常工程开发闭环】
-
-  [09:30 晨间开工] ────> 触发 daily：自动检索待办与 L0 知识库路由，进入就绪态
-          │
-          ▼
-  [11:00 踩坑解决] ────> 遵循 guidelines 微创改动，调通后触发 sink 沉淀经验卡
-          │
-          ▼
-  [15:00 换棒接力] ────> 会话打满，打 /handoff 封存；新会话打 /handoff 8 秒级接续
-          │
-          ▼
-  [18:00 项目收尾] ────> 触发 sink 复盘 生成 Playbook，并由 kb build 刷新路由
-```
-
----
-
-## 📂 仓库结构
-
-```
-agent-suite/
-├── skills/                            # 🛠️ 核心 Skill / 方法合集 (可直接软链挂载)
-│   ├── guidelines/                    # 行为准则技能 (来自 agent-working-guidelines)
-│   ├── handoff/                       # 会话接力技能 (来自 handoff)
-│   ├── capture/                       # 知识入库技能 (来自 Obsidian-Wiki-llm)
-│   ├── sink/                          # 经验沉淀技能 (来自 Obsidian-Wiki-llm)
-│   ├── kb/                            # 知识库管理与路由编译引擎
-│   ├── daily/                         # 每日开工与日志
-│   └── tidy/                          # 定期知识整理
-├── templates/                         # 📋 辅助模板库 (供非 Skill 环境复制生效)
-│   ├── agents/                        # 各客户端 Prompt 模板 (CLAUDE.md / .cursorrules 等)
-│   └── wiki/                          # 知识库初始结构骨架与 4 类卡片契约模板
-└── docs/                              # 📖 深度进阶手册与各通道实操详解
-```
-
----
-
-## 🤝 贡献与扩展
-
-`agent-suite` 是一个不断迭代扩展的 Skills 合集。欢迎提交 PR 贡献新的方法与工具 Skill！
-
-**License**: [MIT](LICENSE)
+本仓库的 [skills/](skills/) 放方法和脚本，[templates/](templates/) 放规则与卡片示例，[docs/00-quickstart.md](docs/00-quickstart.md) 说明如何把三者配合使用。

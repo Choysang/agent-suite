@@ -42,11 +42,12 @@ export class Git {
       child.on('error', fail);
       child.on('close', code => {
         const result = { code: code ?? 1, out: Buffer.concat(out), err: Buffer.concat(err).toString('utf8') };
-        if (result.code === 0 && inputError) fail(inputError);
+        if (result.code === 0 && inputError) fail(new Error(`git ${args.join(' ')}: stdin ${inputError.message}`, { cause: inputError }));
         else if ((opts.ok ?? (c => c === 0))(result.code)) done(result);
         else fail(new Error(`git ${args.join(' ')}: ${result.err.trim() || `exit ${result.code}`}`));
       });
-      child.stdin.end(opts.input ?? '');
+      if (opts.input?.length) child.stdin.end(opts.input);
+      else child.stdin.end();
     });
   }
 

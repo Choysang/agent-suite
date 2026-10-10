@@ -3,6 +3,14 @@ import { test } from 'node:test';
 import { Git } from '../src/adapters/git.ts';
 import { repo } from './helpers.ts';
 
+test('commands with no payload finish without writing an empty chunk to stdin', async () => {
+  const git = new Git(repo());
+  const head = await git.run(['rev-parse', 'HEAD']);
+  const results = await Promise.all(Array.from({ length: 16 }, () => git.run(['rev-parse', 'HEAD'])));
+  assert.ok(results.every(result => result === head));
+  assert.equal(await git.run(['mktree'], { input: '' }), '4b825dc642cb6eb9a060e54bf8d69288fbee4904');
+});
+
 test('a Git failure reports stderr when it closes stdin before a large payload', async () => {
   const git = new Git(repo());
   await assert.rejects(

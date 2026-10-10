@@ -37,5 +37,5 @@ Communicate in Simplified Chinese by default. Deliver work products in the langu
 
 ## 5. Knowledge & Skills Routing
 
-- When local knowledge repository (`D:/zuomian/Obisidian/Knowledge`) is configured, attempt to read `<vault>/ROUTER.md` at task start if context is not yet loaded, loading matched engineering specifications. If inaccessible, report limitations and proceed normally.
+- When local knowledge repository (`<vault>`) is configured, attempt to read `<vault>/ROUTER.md` at task start if context is not yet loaded, loading matched engineering specifications. If inaccessible, report limitations and proceed normally.
 - On complex engineering patterns, consult and reuse skills on demand, and proactively preserve non-obvious engineering solutions with high reuse value.

@@ -364,7 +364,7 @@ def render_router(vault: Path, taxonomy: dict, topic_counts: dict, n_projects: i
         topics = "、".join(f"{t}({topic_counts[slug][t]})" for t in spec["topics"])
         rows.append(f"| {spec['name']} | {cell('、'.join(map(str, spec['keywords'])))} | {topics} "
                     f"| `{ROUTES}/{slug}.md` | {cell(str(spec.get('redline') or ''))} |")
-    kb = f"python {vault.as_posix()}/.agents/skills/kb/scripts/kb.py"
+    kb = f'python "{vault.as_posix()}/.agents/skills/kb/scripts/kb.py" --vault "{vault.as_posix()}"'
     return ROUTER_TEMPLATE.format(vault=vault.as_posix(), kb=kb, routes=ROUTES, wiki=WIKI,
                                   rows="\n".join(rows), n_projects=n_projects, n_tools=n_tools)
 

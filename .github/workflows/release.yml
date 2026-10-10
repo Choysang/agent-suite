@@ -1,0 +1,62 @@
+name: Check and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Check knowledge engine
+        run: |
+          python -m pip install 'PyYAML>=6' pytest
+          python -m pytest knowledge/.agents/skills/kb/scripts -q
+      - name: Check handoff
+        working-directory: handoff
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm run check
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Package the three modules
+        run: |
+          mkdir -p dist
+          for module in guidelines knowledge handoff; do
+            git archive --format=zip --prefix="$module/" --output="dist/$module.zip" "HEAD:$module"
+          done
+          (cd dist && sha256sum *.zip > SHA256SUMS)
+      - name: Publish separate downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/*.zip dist/SHA256SUMS \
+            --verify-tag --title "Agent Suite $RELEASE_TAG" \
+            --notes '工作指南、知识库、会话交接三个模块可以分别下载。使用方法见各模块 README。'

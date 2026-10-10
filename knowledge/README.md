@@ -1,118 +1,66 @@
-# Obsidian-Wiki-LLM
+# 知识库
 
-**🌐 [English](README.en.md) | 中文**
+[返回 Agent Suite](https://github.com/Choysang/agent-suite) · [English](README.en.md) · [单独下载](https://github.com/Choysang/agent-suite/releases/latest/download/knowledge.zip)
 
-> 这不是笔记软件,是让 AI 当馆员的知识操作系统——人只负责往里丢东西和提问题,AI 负责摘要、归档、建立关联、保持新鲜度。理论基础是 Karpathy 的 LLM Wiki 思想:普通 RAG 每次提问都重新推导一遍然后忘掉,这套系统把每次推导的结果编译一次、持续复用,知识像滚雪球一样越用越厚。
+把文章、工具和做事经验保存成 Markdown 卡片。以后遇到相似问题，Agent 先查已有记录，再开始工作。你可以用 Obsidian 阅读和编辑，也可以直接使用文件夹。
 
-灵感来自两篇 gist:
+## 知识库里有哪些功能
 
-- [Andrej Karpathy — LLM Wiki v1](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f):别把 LLM 当查询器,把它当馆员;原始资料是「源代码」,LLM 持续编译出结构化 Wiki。
-- [rohitg00 — LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2):补上生命周期治理 —— 认知状态、显式替代、冲突复核。
+下面五个 Skill 都属于这个模块：
 
-本项目是这两套思想在 **Obsidian + Claude Code** 上的实际落地方案,在真实个人知识库上持续迭代至今(v5)。演进路线:v3 把流程做成六个可执行命令;v4 引入经验卡与全局注入的路由;v5 统一卡片契约、路由由卡片自动生成、引擎与行为都沉淀为 Agent Skills。
-
-## 核心理念(一句话)
-
-**卡片是唯一的状态;路由由卡片生成;判断交给模型,记账交给 `kb`。**
-
-- **卡片**:一个场景一张卡(经验 / 项目档案 / 工具 / 资料 / 笔记),frontmatter 是路由契约——`when`(何时用,写用户原话或症状)和 `not_when`(何时不用)决定它何时被检索到。
-- **路由**:不是人肉维护的目录,是 `kb build` 从卡片和标签表(`taxonomy.yml`)生成的——常驻上下文的只有一张 `ROUTER.md` 一级表,任务命中才往下读,不命中不读,上下文永远轻。
-- **红线**:每个域一条「常驻红线」写进 `ROUTER.md` 表里(如「PS 5.1 无 `&&`」「Excel 错误值不当 0」),每个会话都看得见,是踩过的坑换来的保险。
-- **证据分级**:经验卡标 `evidence`——实测 > 拍板(用户拍板的口径)> 外部(文章说的)> 推断。低证据不覆盖高证据;冲突不自动裁决,列出来等用户拍板。
-- **吸收合并**:新知识进来先 `kb find` 查重,按「补充 / 细化 / 更优 / 冲突 / 新建」五种情形并卡,不长出重复条目。
-
-## 架构:两个世界 + 渐进披露
-
-**两个世界**
-
-| 世界 | 目录 | 性质 |
-|------|------|------|
-| 工作台 | `00.Inbox` `10.Projects` `20.Areas` `40.Archive` `50.Daily` | 过程记录,不路由,人随便写 |
-| 知识库 | `30.Wiki/`(lessons / playbooks / tools / sources / notes / raw / routes) | 唯一参与路由的沉淀区,卡片只在这里 |
-
-**路由四层(渐进披露)**
-
-```
-L0 ROUTER.md(一表,常驻上下文) → L1 routes/<域>.md(命中后) → L2 卡片(选中后) → L3 原文(卡片不够时)
-```
-
-**动作循环**:人只做两件事——丢东西、提问题。其余是五个 skill:
-
-| 场景 | skill | 做什么 |
+| 功能 | 做什么 | 可以怎么说 |
 |---|---|---|
-| 链接 / 文章 / 剪藏 / 粘贴的一段话 | `capture` | 去重 → 读原文 → 评估 → 写卡 → 拆经验 |
-| 踩坑 / 拍板 / 好做法 | `sink` | 当场写经验卡,标证据等级 |
-| 项目或大更新收尾 | `sink 复盘` | 写 8 节项目档案,踩坑拆成经验卡 |
-| 开工 / 待办 / 记一下 | `daily` | 自动工作日志,人不手写 |
-| 每 2–4 周 | `tidy` | 清收件箱、合并同类、体检 |
+| [capture · 收资料](.agents/skills/capture/SKILL.md) | 收录文章、GitHub 项目、网页剪藏和粘贴文字 | 「存一下这个链接」「处理一下剪藏」 |
+| [sink · 记经验](.agents/skills/sink/SKILL.md) | 记录解决办法与适用条件，项目结束后整理复盘 | 「沉淀一下刚才的经验」「复盘这个项目」 |
+| [kb · 查知识库](.agents/skills/kb/SKILL.md) | 查经验和资料、建卡、检查格式、更新知识目录 | 「查查知识库里有没有类似问题」 |
+| [daily · 待办与日志](.agents/skills/daily/SKILL.md) | 看待办、记完成事项和当天的工作 | 「开工」「加个待办」「这件事完成了」 |
+| [tidy · 整理知识库](.agents/skills/tidy/SKILL.md) | 清收件箱、合并同类卡片、检查过时记录 | 「整理一下知识库」 |
 
-行为写在 Agent Skills(`.agents/skills/*/SKILL.md`)里——**规则不靠记忆,靠可执行的 skill**,换会话、换模型、换 agent 都不退化;记账用一个单文件 Python 引擎 `kb.py`(仅依赖 PyYAML:BM25 检索、建卡、去重、校验、生成路由)。
+Skill 负责告诉 Agent 怎么做，`kb.py` 负责检索、建卡、去重、校验和生成目录。网页阅读、总结与判断由你使用的 Agent 完成。
 
-## 需要的时候怎么检索
+## 第一次使用
 
-回答任何问题前必须走完:
+需要能读写本地文件的 Agent，以及 **Python 3.11+**。使用 Obsidian 是可选的。
 
+1. 下载本模块，解压得到 `knowledge/`。
+2. 准备另一个空目录作为自己的知识库。
+3. 给 Agent 发下面这段话，把两处路径换成实际的绝对路径。
+
+```text
+安装资料在 <knowledge 目录的绝对路径>，
+我的知识库在 <准备好的空目录绝对路径>。
+请读取安装资料中的 BOOTSTRAP.md，按它的流程搭建我的知识库。
 ```
-① 对照 ROUTER.md 命中词语义匹配,命中才深入读取,没命中不读
-② 打开二级路由挑条目,只读需要的卡;卡不够再读原文(raw、README、网页)
-③ 综合输出,关键结论标注来源卡片
-④ 有价值就 sink 回库,库越用越大
-⑤ 诚实兜底:库里没有就说「知识空白」,不用通用知识冒充库内容
-```
 
-好处是**答案可溯源**——不是模型编的,是能指回具体卡片的;且**只读命中之物**,token 消耗与库大小解耦。
+[BOOTSTRAP.md](BOOTSTRAP.md) 会引导 Agent 确认分类，复制规则、模板和 Skills，安装 PyYAML，生成 `ROUTER.md` 并检查结果。安装资料和个人知识库各自放在自己的目录里。
 
-## 与传统 RAG 的区别
+在知识库根目录中，Codex 可以发现 `.agents/skills/`；Claude Code 可以按引导配置 `.claude/skills/`。其他 Agent 可以直接读取相应 `SKILL.md`。从项目里访问知识库的方法见[联合使用说明](https://github.com/Choysang/agent-suite/blob/main/docs/00-quickstart.md)。
 
-| 维度 | 普通 RAG | 本方法(LLM Wiki) |
-|------|---------|------------------|
-| 知识存储 | 向量数据库 | Obsidian Markdown 卡片 |
-| 检索方式 | 语义相似度召回 | 生成的路由(命中词 + 红线)+ BM25 卡片检索 |
-| 知识复用 | 每次重新拼接上下文 | 编译一次,持续复用、持续吸收 |
-| 可读性 | 对人不友好(向量) | 人和 AI 都可直接读 |
-| 规模门槛 | 需要嵌入 API + 向量库 | 只需 Claude Code + Python,小库无需向量化 |
+## 日常怎么用
 
-本方法不排斥 RAG —— 卡片超过 ~500 张、路由定位明显失手时,再引入本地混合检索(BM25 + 向量)作为补充。
+- 丢一个链接或一篇文章，说「存一下」。
+- 解决一个有复用价值的问题，说「沉淀一下经验」。
+- 遇到新任务，说「先查查知识库」。
+- 开始一天的工作，说「开工」。
+- 项目做完，说「复盘这个项目」。
 
-## 怎么构建一套属于自己的
+查资料时先看 `ROUTER.md`，再读匹配的目录、卡片和原文。写完卡片运行 `kb build`，知识目录就随卡片更新。
 
-不需要从零设计:
+## 文件入口
 
-1. **跑引导**:[`BOOTSTRAP.md`](BOOTSTRAP.md) 是整段可粘贴的建库提示词,回答几个问题,约 10 分钟建成同构系统。
-2. **把流程做成 skill,不要只写在文档里**——这是最容易被忽略但最重要的一步。规则写在文档里,AI 隔几次会话就会"忘了走流程";做成 skill,流程才稳定执行。
-3. **用 git 接管版本历史**——每次大改动前存检查点,AI 才敢大胆维护,你才敢大胆放手。
-4. **先跑起来,再长复杂**——域和主题从你真实收进来的东西里长出来,不要预先设计几十个分类。
+| 文件 | 用途 |
+|---|---|
+| [BOOTSTRAP.md](BOOTSTRAP.md) | 建库步骤 |
+| [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md) | 知识库规则与 Claude Code 读取入口 |
+| [taxonomy.example.yml](taxonomy.example.yml) | 分类与关键词示例 |
+| [Templates/](Templates/) | 经验、项目、工具、资料、笔记和日志模板 |
+| [.agents/skills/](.agents/skills/) | 五个 Skill，`kb` 目录中含 Python 脚本与测试 |
+| [GUIDE.md](GUIDE.md) | 需要了解原理时再读的详细说明 |
 
-几条容易踩的坑:
+卡片、原始资料、待办和个人偏好都保存在你自己的知识库中。公开分享前自行检查内容。
 
-- **别一上来就把系统做复杂**——目录别套太深,规则只写一份,复杂功能等真实需求出现再加
-- **`tags` 必须是受控词表**(写在 `taxonomy.yml`)——自由打标签三个月后路由就没法生成了
-- **`when` 写用户原话**——路由准不准全看这一行像不像人话
-- **重要结论必须能查到出处 + 证据等级**——防止 AI 一本正经编造的生命线
-- **别太早上向量数据库**——路由 + 索引 + BM25 又快又可读
-- **人的负担要降到最低**——人只做「丢东西」和「提问题」,动作一旦变复杂,系统很快就会被弃用
+## 来源与许可
 
-## 这个仓库里有什么
+迁自 `Choysang/Obsidian-Wiki-llm`，现在只在 Agent Suite 中维护。方法参考 [Karpathy LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 和 [LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)。
 
-| 文件/目录 | 作用 |
-|-----------|------|
-| [`BOOTSTRAP.md`](BOOTSTRAP.md) | **从零构建的提示词** —— 复制粘贴到任意空 Obsidian vault + Claude Code,回答几个问题建成整套系统 |
-| [`AGENTS.md`](AGENTS.md) | 系统宪法模板(跨 agent 唯一规则文档:卡片契约 / 路由协议 / 吸收规则 / 红线) |
-| [`CLAUDE.md`](CLAUDE.md) | 一页指针,指向 AGENTS.md(防两份全文副本) |
-| [`GUIDE.md`](GUIDE.md) | 方法论教学:第一性原理、架构详解、成长路线、避坑指南 |
-| [`.agents/skills/`](.agents/skills) | 五个 skill(`kb` `capture` `sink` `tidy` `daily`)与 `kb.py` 引擎,直接拷进 vault 即用 |
-| [`Templates/`](Templates) | 卡片模板(lesson / playbook / tool / source / note / daily) |
-| [`taxonomy.example.yml`](taxonomy.example.yml) | 受控词表示例(域 / 主题 / 命中词 / 红线) |
-
-## 快速开始
-
-1. 新建一个空文件夹,用 Obsidian 打开作为 vault,在其中启动 Claude Code(或任何能读写文件的 AI agent)。
-2. 打开 [`BOOTSTRAP.md`](BOOTSTRAP.md),把里面的提示词整段复制发给 AI。
-3. 回答 AI 关于你自己的几个问题(称呼、身份、当前重心、你的知识域)。
-4. 系统建成后,日常只需要:丢东西进 `00.Inbox/` 说「存一下」、踩坑时说「沉淀」、开工说「daily」、项目收尾说「复盘」、每两三周说「整理一下」。
-
-更完整的原理讲解见 [`GUIDE.md`](GUIDE.md)。
-
-## License
-
-[MIT](LICENSE)
+[MIT License](LICENSE)

@@ -24,7 +24,7 @@ Delegate or parallelize only when benefits exceed coordination costs. Keep respo
 
 ### 5. Context and Knowledge
 Reuse available context and memory. Retrieve additional information only when relevant; avoid rediscovering established facts.
-For local workspace tasks with access to `D:/zuomian/Obisidian/Knowledge`, read `<vault>/ROUTER.md` once if not already in context. Follow its routing protocol and load only relevant knowledge.
+For local workspace tasks with access to `<vault>`, read `<vault>/ROUTER.md` once if not already in context. Follow its routing protocol and load only relevant knowledge.
 When available, use `sink` for reusable, non-obvious solutions and user decisions, and `capture` for valuable shared resources. Suggest retrospectives after major milestones.
 If a needed skill is unavailable, consult `<vault>/.agents/skills/<name>/SKILL.md` when accessible. Never claim to have accessed or saved information when you haven't.
 

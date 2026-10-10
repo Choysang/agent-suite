@@ -1,5 +1,11 @@
 """Tests for kb.py. Run: python -m pytest .agents/skills/kb/scripts -q"""
 import datetime as dt
+import json
+import re
+import shlex
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -75,6 +81,26 @@ def test_build_writes_router_hub_and_tool_shelf(vault):
     assert hub.index("prod-pull") < hub.index("trivy")  # lessons outrank tools
     assert "本地开发" in hub  # not_when is shown for precise routing
     assert "## 参考（1）" in (vault / kb.ROUTES / "tools.md").read_text(encoding="utf-8")
+
+
+def test_router_command_finds_cards_from_another_directory_with_spaces(tmp_path, monkeypatch):
+    vault = tmp_path / "我的知识库 with spaces"
+    script = vault / ".agents/skills/kb/scripts/kb.py"
+    script.parent.mkdir(parents=True)
+    shutil.copyfile(kb.__file__, script)
+    write(vault / kb.TAXONOMY, TAXONOMY)
+    write(vault / kb.WIKI / "lessons/prod-pull.md", LESSON)
+    assert kb.build(vault, TODAY).errors == []
+    router = (vault / "ROUTER.md").read_text(encoding="utf-8")
+    command = re.search(r'`(python [^`]+) find "任务描述"`', router)
+    assert command is not None
+    args = shlex.split(command.group(1))
+    monkeypatch.setenv("KB_VAULT", str(tmp_path / "another-vault"))
+    result = subprocess.run(
+        [sys.executable, *args[1:], "find", "部署", "--json"],
+        cwd=tmp_path, check=True, capture_output=True, encoding="utf-8",
+    )
+    assert json.loads(result.stdout)[0]["id"] == "prod-pull"
 
 
 def test_check_does_not_write(vault):

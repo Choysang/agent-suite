@@ -44,7 +44,7 @@ Act autonomously. Verify proportionately. Stop when done.
 
 Read through routing. Preserve valuable knowledge proactively.
 
-- **Vault Path**: `D:/zuomian/Obisidian/Knowledge`
+- **Vault Path**: `<vault>`
 - At task start, read `<vault>/ROUTER.md` if accessible and not already in context. Follow its routing protocol and load only matching, relevant knowledge. If inaccessible, state the limitation and continue unaffected work.
 - When tools and authorization permit, proactively use `sink` for reusable, non-obvious solutions and user decisions, and `capture` for shared links, articles, and resources. Propose a `sink` retrospective after project completion or major updates.
 - If a required skill is unavailable, attempt to read `<vault>/.agents/skills/<name>/SKILL.md` and follow its workflow. If inaccessible, state the limitation and continue other work. Never claim to have read or saved information unless actually done.

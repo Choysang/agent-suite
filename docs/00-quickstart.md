@@ -1,131 +1,106 @@
-# 入门配置
+# 三个模块一起用
 
-按需要配置工作指南、知识库和会话交接。先让一个方法可用，再逐步加上其他部分。
+[返回首页](../README.md)
 
-## 先准备什么
+按「开始一个项目 → 保存资料和经验 → 换会话 → 项目收尾」走一遍。每个模块都可以独立使用，不需要一次装齐。
 
-| 要用的部分 | 需要的环境 |
-|---|---|
-| 工作指南 | 能加载项目规则或自定义指令的 Agent |
-| 知识入库和整理 | 能读写本地文件、执行命令的 Agent；Python 3.11 或以上、PyYAML；一个本地知识库目录 |
-| 会话交接 | Git 项目、Node.js 24 或以上，以及原项目的 `handoff` 命令行工具 |
+## 1. 给 Agent 一份工作指南
 
-知识库里的文件都是 Markdown，可以用 Obsidian 查看，也可以用普通编辑器。
+在[工作指南](../guidelines/)里选适合你的版本：
 
-先下载方法合集，再按下面三个部分配置：
+- Codex：把 `guidelines/codex/AGENTS.md` 的内容放进项目根目录的 `AGENTS.md`。
+- Claude Code：把 `guidelines/universal/AGENTS.md` 的内容放进项目根目录的 `CLAUDE.md`。
+- Claude 聊天：把 `guidelines/claude/INSTRUCTIONS.md` 粘到个人偏好设置中。
+- 其他 Agent：使用通用版，通过它支持的规则文件或自定义指令加载。
 
-```bash
-git clone https://github.com/Choysang/agent-suite.git
-```
+如果已有项目规则，把需要的条目合进去。使用知识库时，把指南里的 `<vault>` 替换成自己的知识库绝对路径。
 
-## 1. 给 Agent 配工作指南
+## 2. 建自己的知识库
 
-选择适合自己的版本，将需要的内容合并到已有规则中。
-
-| 使用环境 | 指南入口 | 放在哪里 |
-|---|---|---|
-| Codex | [Codex 版](https://github.com/Choysang/agent-working-guidelines/blob/main/codex/AGENTS.md) | 项目根目录的 `AGENTS.md` |
-| Claude Code | [本仓库的简版模板](../templates/agents/CLAUDE.md) | 项目根目录的 `CLAUDE.md`；使用其中的命令前，先完成下文的工具配置 |
-| Claude 网页或账号指令 | [Claude 账号版](https://github.com/Choysang/agent-working-guidelines/blob/main/claude/INSTRUCTIONS.md) | 账号的自定义指令中；本地知识库和命令仍需具备相应访问能力 |
-| 其他 Agent | [通用版](https://github.com/Choysang/agent-working-guidelines/blob/main/universal/AGENTS.md) | 按当前工具支持的规则文件或自定义指令入口配置 |
-
-Codex 的规则文件和 Claude Code 的项目指令入口分别见 [OpenAI 官方说明](https://developers.openai.com/codex/guides/agents-md) 与 [Claude Code 官方说明](https://code.claude.com/docs/en/memory)。规则里已经有项目要求时，保留它们，合并共用原则即可。
-
-## 2. 配置知识库
-
-### 安装知识库技能
-
-从本仓库的 `skills/` 中选择 `kb`、`capture`、`sink`、`daily`、`tidy`。复制或链接整个技能文件夹，保留 `SKILL.md` 和配套脚本。常见位置如下：
-
-| Agent | 项目内的技能目录 | 用户级技能目录 |
-|---|---|---|
-| Codex | `.agents/skills/` | `~/.agents/skills/` |
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
-
-这些位置来自 [OpenAI Skills 文档](https://developers.openai.com/codex/skills) 和 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)。其他 Agent 按其当前文档配置。
-
-知识库的五个技能建议先放在 `<你的知识库>/.agents/skills/` 下：`kb`、`capture`、`sink`、`daily`、`tidy`。Claude Code 等工具需要其他目录时，再从其技能目录链接到这里，让脚本和知识库规则使用同一份配置。
-
-已有同名技能时先比较版本和本地修改。会话交接所需的运行工具按第 3 步安装；只复制本仓库的 `skills/handoff/` 还不能执行交接。
-
-### 新建知识库
-
-选择一个目录存放自己的知识，和下载的 `agent-suite` 仓库分开。可以把原项目的 [BOOTSTRAP.md](https://github.com/Choysang/Obsidian-Wiki-llm/blob/main/BOOTSTRAP.md) 发给 Agent，按引导完成建库。
-
-最小配置需要：
-
-- `AGENTS.md`：知识库的卡片格式、读取和写入规则，可参考 [原项目规范](https://github.com/Choysang/Obsidian-Wiki-llm/blob/main/AGENTS.md)。
-- `.agents/skills/`：上述五个知识库技能及 `kb/scripts/kb.py`。
-- `30.Wiki/taxonomy.yml`：知识分类表，可从 [分类示例](../templates/wiki/taxonomy.yml) 起步，改成自己的主题。
-- `30.Wiki/` 下的 `lessons/`、`playbooks/`、`tools/`、`sources/`、`notes/` 和 `raw/`：分别存经验、项目档案、工具、资料、笔记和原文。
-- `00.Inbox/`、`Clippings/`：放待处理资料和网页剪藏。要使用 `daily` 时，再准备 `50.Daily/TODO.md`；会议功能按自己的情况配置。
-
-已经有知识库时，让 Agent 先检查现有结构和规则，只补缺少的部分。
-
-### 改成自己的路径
-
-本仓库的知识库技能仍保留了作者的本机路径。安装后，把各 `SKILL.md` 中的知识库路径和 `kb.py` 命令路径改成自己的实际位置，工作指南中的知识库路径也保持一致。`daily` 中的待办分组、会议文件按需要调整。
-
-脚本可用 `--vault` 或环境变量 `KB_VAULT` 指定知识库目录；这只改变脚本操作的目录，技能说明里的路径仍要同步配置。
-
-在知识库根目录运行：
-
-```bash
-python -m pip install "pyyaml>=6"
-python .agents/skills/kb/scripts/kb.py --vault "." check
-python .agents/skills/kb/scripts/kb.py --vault "." build
-```
-
-`check` 检查卡片和分类表，`build` 还会生成 `ROUTER.md` 与 `30.Wiki/routes/`。空库可能提示某些分类还没有内容；出现 `ERROR` 时，先按提示修复。
-
-### 让新任务查得到知识
-
-在 Agent 实际加载的规则文件里，加入下面这段，并填上自己的绝对路径：
+单独下载[知识库模块](../knowledge/)，准备一个空目录作为自己的知识库。给能读写本地文件的 Agent 发：
 
 ```text
-知识库目录：<你的知识库绝对路径>。
-开始任务时，先读这个目录下的 ROUTER.md。
-有相关主题才继续读对应卡片；目录没命中但库里可能有时，用 kb find 检索。
-解决了值得复用的问题，用 sink 记经验；需要收录外部资料时，用 capture。
+知识库安装资料在 <下载后的 knowledge 绝对路径>。
+目标知识库在 <我准备的空目录绝对路径>。
+请读取安装资料里的 BOOTSTRAP.md，按它的流程帮我搭建。
 ```
 
-规则可以放在常用项目中，或按 Agent 支持的方式配置为用户级规则。生成 `ROUTER.md` 后，还需要把这个读取入口接到实际加载的规则里。
+Agent 会帮你确认分类，放入规则、模板、五个 Skill 和 `kb.py`，再生成 `ROUTER.md`。
 
-先用一句话检查读取是否可用：
+如果在项目目录里做事，补一条规则：
 
 ```text
-查查知识库里有没有关于“我正在处理的问题”的经验，告诉我读了哪些卡片。
+我的知识库在 <vault 的绝对路径>。
+任务开始时读取该目录的 ROUTER.md，按路由只读相关内容。
+需要知识库 Skill 时，读取该目录 .agents/skills/<名称>/SKILL.md 并执行；
+运行知识库命令时使用该知识库的路径。
 ```
 
-第一次入库时，可以发一个文章链接说“存一下”，检查是否生成了带来源、适用条件的卡片，以及知识目录是否已更新。
+个人知识库放在自己的目录里；分享用的 Agent Suite 仓库保存模板和工具。
 
-## 3. 配置会话交接
+## 3. 收资料、记经验、查记录
 
-完整运行工具在 [handoff 原项目](https://github.com/Choysang/handoff)，本仓库提供联合使用时的技能说明。
+这些动作都是知识库功能：
 
-按原项目的安装方式，在准备存放工具的目录运行：
+| 你想做什么 | 可以怎么说 | 对应 Skill |
+|---|---|---|
+| 收藏文章、项目、剪藏或文字 | 「存一下这个链接」「处理一下剪藏」 | `capture` |
+| 记下解决问题的做法和条件 | 「沉淀一下刚才的经验」 | `sink` |
+| 查以前的经验和资料 | 「查查知识库里有没有类似问题」 | `kb` |
+| 看待办、记录完成事项 | 「开工」「加个待办」「这件事完成了」 | `daily` |
+| 清收件箱、合并同类、检查过时卡片 | 「整理一下知识库」 | `tidy` |
+
+在知识库根目录也可以直接运行脚本：
 
 ```bash
-git clone https://github.com/Choysang/handoff.git
-cd handoff
-npm install
+python .agents/skills/kb/scripts/kb.py find "会话交接"
+python .agents/skills/kb/scripts/kb.py build
+```
+
+从项目目录访问另一个知识库时，用带引号的绝对路径，`--vault` 放在子命令前：
+
+```bash
+python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>" find "会话交接"
+```
+
+## 4. 安装交接工具，换个会话继续
+
+下载并解压[会话交接模块](../handoff/)，在 `handoff` 目录中运行（需要 Node.js 24+ 和 Git）：
+
+```bash
 npm link
 handoff install
 ```
 
-`handoff install` 会尝试向支持的 Agent 注册技能和相关配置，以实际输出为准。已安装时先确认当前版本和配置，避免再用本仓库的副本覆盖它。
+保留解压目录，命令和 Skill 都链接到这里。安装会配置个人 Agent 的 Skill 与 hook；支持情况见[交接介绍](../handoff/)。
 
-回到需要交接的 Git 项目，运行 `handoff ls`，确认命令可用。然后在 Agent 对话里使用：
+之后回到自己的项目 Git 仓库：
 
-| 操作 | Claude Code | Codex |
-|---|---|---|
-| 保存当前会话 | `/handoff` | `$handoff` |
-| 接手返回的编号，例如 7 | `/handoff 7` | `$handoff 7` |
+- Claude Code：当前会话输入 `/handoff`，得到编号后在新会话输入 `/handoff 7`。
+- Codex：当前会话输入 `$handoff`，在新会话输入 `$handoff 7`。
+- 其他能执行本地命令的 Agent：让它读取 `handoff/skill/SKILL.md`，按流程操作。
 
-新会话需要能访问对应项目及其交接记录。让接手 Agent 先核对当前代码、未完成事项和下一步，再继续工作。不同机器之间的同步、并行任务和汇合方法见原项目说明。
+`7` 是示例，使用实际返回的编号。同机切换会话直接使用；跨机器需要另外同步交接记录。
 
-## 配好以后怎么用
+## 5. 收尾时复盘
 
-看到资料说“存一下”，解决问题说“沉淀一下”，换会话时交接，项目结束后复盘。下次任务开始时，先读知识目录，再查看相关卡片。
+告诉 Agent：
 
-工作指南决定怎么做事，交接记录帮助当前任务继续，知识库保存以后还用得上的资料和经验。
+```text
+复盘这个项目：结合项目文件和交接记录，整理最终做法、验证结果、
+关键决策和踩过的坑。可复用的内容写进知识库，一次性进度留在项目里。
+```
+
+知识库的 `sink` 会整理项目档案和经验卡，再更新知识目录。
+
+## 用 Git 只获取一个模块
+
+例如只取知识库：
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse https://github.com/Choysang/agent-suite.git
+cd agent-suite
+git sparse-checkout set knowledge
+```
+
+取工作指南就把 `knowledge` 换成 `guidelines`；取交接工具就换成 `handoff`。同时取两个模块，可以运行 `git sparse-checkout set guidelines knowledge`。后续用 `git pull` 更新。

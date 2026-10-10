@@ -1,72 +1,43 @@
-# agent-suite
+# Agent Suite
 
-我把自己使用的 Agent 工作指南、知识入库方法和会话交接工具整理在这里，方便大家一起用。
+让 Agent 按约定做事，把有用的资料和经验留下来，换会话时接着干。
 
-你可以用这套方法约定 Agent 的工作方式，把文章和经验存进知识库，并在换会话时继续之前的任务。仓库里放的是 Skills、规则模板和使用说明，按需要选用即可。
+这里收集我日常使用的工作指南、知识库方法和会话交接工具。三个部分可以一起用，也可以只取你需要的那一个。
 
-## 这套方法分三部分
+## 按需选择
 
-### 1. 工作指南
-
-给 Agent 约定做事方式：核实事实、保留已有工作、只改与任务有关的内容，并如实说明做了什么、哪些还没验证。
-
-不同 Agent 可以选择对应的规则版本。配置后让规则随任务加载，也可以用 [guidelines](skills/guidelines/SKILL.md) 在具体任务里提醒它：“按工作指南处理这个任务”。
-
-### 2. 知识库
-
-把文章、工具、排查经验和项目复盘存进本地知识库，遇到类似任务时再查阅。下面这些都是知识库里的功能，分别负责收资料、记经验、检索和日常维护：
-
-| 知识库功能 | 用来做什么 | 可以怎么说 |
+| 模块 | 解决什么问题 | 单独下载 |
 |---|---|---|
-| [capture · 收资料](skills/capture/SKILL.md) | 收录文章、GitHub 项目、网页剪藏或粘贴的文字 | “存一下这个链接”“处理一下剪藏” |
-| [sink · 记经验](skills/sink/SKILL.md) | 问题解决后记录做法和适用条件；项目结束后整理复盘 | “沉淀一下刚才的经验”“复盘这个项目” |
-| [kb · 查找与维护](skills/kb/SKILL.md) | 查以前的经验和资料，检查卡片、更新知识目录 | “查查知识库里有没有类似问题” |
-| [daily · 开工与待办](skills/daily/SKILL.md) | 看待办、记录完成事项和当天的工作 | “开工”“加个待办”“这件事完成了” |
-| [tidy · 整理知识库](skills/tidy/SKILL.md) | 处理收件箱、合并重复内容、检查断链和过时记录 | “整理一下知识库” |
+| [工作指南](guidelines/) | 让 Agent 先判断、少绕路，只改必要的地方，并如实说明验证结果 | [guidelines.zip](https://github.com/Choysang/agent-suite/releases/latest/download/guidelines.zip) |
+| [知识库](knowledge/) | 收资料、记经验、查旧记录，用 Markdown 保存，支持在 Obsidian 中查看 | [knowledge.zip](https://github.com/Choysang/agent-suite/releases/latest/download/knowledge.zip) |
+| [会话交接](handoff/) | 保存当前任务的目标、约束、进度和下一步，换会话或换 Agent 后继续 | [handoff.zip](https://github.com/Choysang/agent-suite/releases/latest/download/handoff.zip) |
 
-知识库用 Markdown 文件保存内容，可以用 Obsidian 查看。`capture` 收外部资料，`sink` 记自己的经验，`kb` 帮助以后找到它们；`daily` 和 `tidy` 按需要使用。
+**点模块名看介绍；点下载只获取那个模块。** 工作指南是配置文本，知识库带五个 Skill 和一个 Python 脚本，会话交接带 Skill 与命令行工具。
 
-### 3. 会话交接
+## 一起怎么用
 
-一个任务还没做完，需要换会话或换 Agent 时，用 [handoff](skills/handoff/SKILL.md) 保存目标、进度、重要决定和下一步。
+以做一个项目为例：
 
-在当前会话输入 `/handoff`，拿到编号后，在新会话输入 `/handoff 7` 接手。Codex 对应使用 `$handoff` 和 `$handoff 7`。这里的 `7` 换成实际返回的编号，新会话需要能访问对应项目的交接记录。
+1. **开始前用工作指南**：告诉 Agent 怎样判断问题、推进任务和验证结果。
+2. **做事时用知识库**：查以前的做法，收下有用的文章和工具，把解决问题的经验记成卡片。
+3. **换会话时用交接**：封存当前现场，拿到编号，让下一个会话从下一步继续。
+4. **收尾时回到知识库**：从项目和交接记录里整理可复用的经验。
 
-交接记录帮助当前任务继续；其中值得以后复用的经验，再通过知识库的 `sink` 保存。
+交接记录跟着项目走，知识库保存以后还能用的资料和经验。`capture`、`sink`、`kb`、`daily`、`tidy` 都属于知识库，具体用法在[知识库介绍](knowledge/)里。
 
-## 怎么开始
+## 从哪里开始
 
-可以先用工作指南。经常做长任务，就加上会话交接；想积累资料和经验，再配置知识库。
+- 只想让 Agent 更好配合你：先用[工作指南](guidelines/)。
+- 想搭自己的知识库：按[知识库入门](knowledge/)准备一个空目录。
+- 经常开新会话、换模型：安装[会话交接](handoff/)。
+- 想三个一起用：看[联合使用示例](docs/00-quickstart.md)。
 
-把下面这段发给能读写本地文件、执行命令的 Agent：
+习惯用 Git 的人也可以[只检出一个模块](docs/00-quickstart.md#用-git-只获取一个模块)。下载包是发布时的版本，Git 获取的是当前源码。
 
-```text
-帮我配置 https://github.com/Choysang/agent-suite。
-先读 README 和 docs/00-quickstart.md，按我当前使用的 Agent 配置需要的部分。
-把工作指南合并到已有规则中，保留原来的项目要求和已安装技能。
-如果要用知识入库，先确认我的知识库目录；如果要用会话交接，检查 handoff 命令是否已安装。
-```
+## 后续维护
 
-会话交接需要另装 `handoff` 工具，知识入库需要配置本地知识库和 Python 环境。详细步骤见 [入门配置](docs/00-quickstart.md)。
+以后只维护 **`Choysang/agent-suite`**：工作指南改 `guidelines/`，知识库改 `knowledge/`，会话交接改 `handoff/`。发布一个版本时，自动生成三个独立下载包。
 
-## 一次任务怎么串起来
+这三个模块分别迁自 `agent-working-guidelines`、`Obsidian-Wiki-llm` 和 `handoff`。原项目的提交历史已保留在本仓库，迁移记录与发布方式见[维护说明](docs/maintenance.md)。
 
-比如让 Agent 修复一个问题：
-
-1. 开始前，按工作指南确认目标，并查知识库里有没有相关经验。配置好读取入口后，Agent 可以先看 `ROUTER.md` 这个知识目录，再读与任务有关的卡片。
-2. 查到有用的文章或项目，把链接发给 Agent，说“存一下”。
-3. 问题解决后，说“沉淀一下刚才的排查经验”，留下做法、证据和适用条件。
-4. 需要换会话时，用 `handoff` 保存进度。在能访问同一项目交接记录的新会话里，输入返回的编号，核对现场后继续。
-5. 项目结束后，说“复盘这个项目”，整理成以后可以参考的项目档案。
-
-下次遇到类似任务，Agent 就能从知识库里查到这些资料和经验。
-
-## 三个原项目
-
-本仓库把三个项目的使用方法串在一起，具体实现和完整说明可以到原项目查看：
-
-- [agent-working-guidelines](https://github.com/Choysang/agent-working-guidelines)：Agent 的工作原则，提供 Codex、Claude 账号和通用版本。
-- [Obsidian-Wiki-llm](https://github.com/Choysang/Obsidian-Wiki-llm)：用 Markdown 卡片积累资料和经验，让 Agent 按任务查阅、入库和整理。
-- [handoff](https://github.com/Choysang/handoff)：保存和接手会话的命令行工具，也包含并行任务的交接方法。
-
-本仓库的 [skills/](skills/) 放方法和脚本，[templates/](templates/) 放规则与卡片示例，[docs/00-quickstart.md](docs/00-quickstart.md) 说明如何把三者配合使用。
+[MIT License](LICENSE)

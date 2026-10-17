@@ -49,6 +49,8 @@ README 的下载链接始终指向最近一次正式发布。提交源码后需�
 
 ## 受控改进与本地副本
 
+全库笔记整理的内容分配、标签迁移、原文保留与发布边界见 [knowledge-curation.md](knowledge-curation.md)。整理规则随 `knowledge/.agents/skills/tidy/SKILL.md` 分发，个人标签和笔记不随公开包分发。
+
 设计取舍见 [rsi-design.md](rsi-design.md)。知识库新实现包含 `kb.py` 和 `kb_rsi.py`，更新整个 scripts 目录；保留个人卡片、taxonomy 和偏好。新字段按变更逐步接入，迁移前记录 Git 状态与备份，先跑兼容性回归，再刷新路由。模板可用 lint 检查，真实库用 check 验证原有契约。
 
 能力晋升必须提供证据、最小 Diff、独立验收与回滚点。相关度与事实证据不被效用分覆盖；固定夹具不作为真实收益证明。修改源码后，还要核对 handoff CLI/Skill junction 和 vault 的实际路径，避免只改发布副本。手动回退采用选择性 git revert 或已备份文件，不覆盖其他工作。

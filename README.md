@@ -3,7 +3,7 @@
 > **让 Agent 立规矩、记经验、传接力。**  
 > 一套专为现代 AI 辅助研发（AI Coding & Agentic Engineering）打造的开箱即用套件。解决大模型「瞎猜瞎改、随手遗忘、长任务上下文断连」三大痛点。
 
-[English Overview](README.en.md) · [快速入门](docs/00-quickstart.md) · [独立下载 Releases](https://github.com/Choysang/agent-suite/releases/latest)
+[快速入门](docs/00-quickstart.md) · [更新记录](#更新记录) · [独立下载 Releases](https://github.com/Choysang/agent-suite/releases/latest)
 
 ---
 
@@ -51,23 +51,20 @@
 
 ---
 
-## 🚀 近期重要版本改动（相比两个版本前）
+## 更新记录
 
-如果你的认知还停留在早期版本，套件已经历了重大的工程升级：
+按日期倒序记录已落地的变化。`main` 可能领先于正式发布；下载包只在发布新标签后更新，不能把源码更新当作下载包已更新。
 
-### 1. 会话交接协议升级至 v2（支持多车道并行与认知看板）
-- **从单线接力升级为 DAG 网格**：支持长任务一分为多（`fork`），利用 Git Worktree 开启多条并行车道让多个 Agent 同时推进独立模块，完成后统一汇聚（`join`）。
-- **A2A (Agent-to-Agent v1.0) 支持与本地 Web UI**：内置轻量本地服务器，运行 `handoff ui` 即可在浏览器直观查阅会话交接的 DAG 关系树图与任务状态。
-- **更可靠的 Git 进程管线**：完善了子进程早期退出时的 Stdin 保护，不再丢失错误诊断信息。
+| 日期 | 版本 / 状态 | 模块与实际变化 | 记录 |
+|---|---|---|---|
+| 2026-10-17 | main，尚未打包发布 | **工作指南与首页**：更新 Codex、Claude 与通用版英文指南，强化前提核验、最小必要复杂度和可观察结果；通用中文版增加极简提示；首页补充模块、安装与工作流介绍。本轮进一步改为可追溯的版本记录。 | [指南更新提交](https://github.com/Choysang/agent-suite/commit/55793c9) |
+| 2026-10-17 | **[v1.1.0](https://github.com/Choysang/agent-suite/releases/tag/v1.1.0)** | **知识库**：分项检索、精简读取、版本绑定反馈、反例隔离和正文预算；增加保留原文的全库整理规则。**handoff 协议 v2**：新增可选知识引用与摩擦记录，兼容旧草稿。**工作指南**：接入三阶段经验反馈入口。 | [设计取舍](docs/rsi-design.md) · [整理方法](docs/knowledge-curation.md) · [验证记录](docs/rsi-validation.md) |
+| 2026-10-10 | **[v1.0.1](https://github.com/Choysang/agent-suite/releases/tag/v1.0.1)** | **handoff**：修复 Git 子进程提前关闭 stdin 时的错误传播，以及无输入命令的空写入问题。 | [版本差异](https://github.com/Choysang/agent-suite/compare/v1.0.0...v1.0.1) |
+| 2026-10-10 | **[v1.0.0](https://github.com/Choysang/agent-suite/releases/tag/v1.0.0)** | **仓库与发布**：合并工作指南、知识库和 handoff，保留原项目历史，提供三个独立下载包；handoff 已包含并行车道、汇合和本地看板。 | [迁移与维护](docs/maintenance.md) |
 
-### 2. 知识库闭环体验改进（RSI Loop）
-- **分项补缺检索 (`kb find --need`)**：对于复杂任务，支持按明确知识需求提取分项候选，避免漏掉关键前置条件。
-- **采信追踪与防污染反馈**：卡片阅读明确记录版本 Revision 与 Task ID（单纯检索命中不等于采信）；执行中记录摩擦与错误假设，阶段完成后由真实结果打分，隔离失效经验，保护知识库的纯净度。
-- **正文预算控制**：对卡片设置最大字数/行数预算，确保检索注入不会撑爆 Agent 上下文。
+v1.1.0 的发布验证为知识库 40 项测试、handoff 28 项测试与类型检查通过。测试证明功能回归通过，不代表已测得长期任务收益。`kb read` 返回 revision，task ID 与实际采用仍由任务流程记录；卡片预算也不等于整个会话的上下文上限。
 
-### 3. 工作指南重塑与极简版（Token-Optimized）
-- **行事原则全线收紧**：全面重构了 Codex 与 Claude Code 的指导原则，强化「独立判断、证据优先、极简优先、精准修改」。
-- **新增通用极简版**：针对系统提示词字符受限、或者对 Token 消耗极度敏感的场景，提炼出 5 段式极简指令（Judgment / Execution / Verification / Knowledge），直击核心要害。
+升级已有安装时，handoff 保留原目录及项目交接记录；知识库同步 Skills、引擎和模板，保留个人卡片、taxonomy 与配置。每次后续发布同步更新本节，注明日期、版本、影响模块和验证入口；全部提交见 [Git 历史](https://github.com/Choysang/agent-suite/commits/main/)。
 
 ---
 

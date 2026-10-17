@@ -1,0 +1,6 @@
+[
+  {"query": "云主机部署 docker 服务", "first": "validated"},
+  {"query": "生产机 pull", "first": "validated"},
+  {"query": "扫描镜像漏洞", "first": "trivy"},
+  {"query": "zzzzunavailablefacet", "first": null}
+]

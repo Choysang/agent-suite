@@ -12,7 +12,7 @@
 | [知识库](knowledge/) | 收资料、记经验、查旧记录，用 Markdown 保存，支持在 Obsidian 中查看 | [knowledge.zip](https://github.com/Choysang/agent-suite/releases/latest/download/knowledge.zip) |
 | [会话交接](handoff/) | 保存当前任务的目标、约束、进度和下一步，换会话或换 Agent 后继续 | [handoff.zip](https://github.com/Choysang/agent-suite/releases/latest/download/handoff.zip) |
 
-**点模块名看介绍；点下载只获取那个模块。** 工作指南是配置文本，知识库带五个 Skill 和一个 Python 脚本，会话交接带 Skill 与命令行工具。
+**点模块名看介绍；点下载只获取那个模块。** 工作指南是配置文本，知识库带五个 Skill 和 Python 检索与治理引擎，会话交接带 Skill 与命令行工具。
 
 ## 一起怎么用
 
@@ -41,3 +41,9 @@
 这三个模块分别迁自 `agent-working-guidelines`、`Obsidian-Wiki-llm` 和 `handoff`。原项目的提交历史已保留在本仓库，迁移记录与发布方式见[维护说明](docs/maintenance.md)。
 
 [MIT License](LICENSE)
+
+## 让经验接受反馈
+
+知识库支持按需求补查证据、按实际采用结果记录版本绑定的反馈、隔离有反例的经验，并用正文预算控制上下文。handoff 记录知识引用与摩擦出处，阶段结束后再沉淀可复用结论；全局规则和工具的晋升需要独立验收及可回退的改动。
+
+参见 [运行协议](knowledge/RSI.md) 和 [设计取舍](docs/rsi-design.md)。这是可检查的工程闭环，不代表已经证明递归能力提升。

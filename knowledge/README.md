@@ -64,3 +64,9 @@ Skill 负责告诉 Agent 怎么做，`kb.py` 负责检索、建卡、去重、�
 迁自 `Choysang/Obsidian-Wiki-llm`，现在只在 Agent Suite 中维护。方法参考 [Karpathy LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) 和 [LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)。
 
 [MIT License](LICENSE)
+
+## 经验的复用反馈
+
+支持按知识需求分项检索、精简读取、绑定内容版本的反馈与预算校验。新卡使用可选治理字段，旧卡仍可用；安装/升级时复制完整的 `.agents/skills/kb/scripts/`（含 `kb_rsi.py`），不要只复制入口文件。机制与边界见 [RSI.md](RSI.md)。
+
+验证：`python -m pytest .agents/skills/kb/scripts -q`；模板检查：`python .agents/skills/kb/scripts/kb.py --vault . lint Templates`。功能回归不等于真实任务质量提升。

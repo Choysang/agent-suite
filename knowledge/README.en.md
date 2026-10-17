@@ -21,3 +21,9 @@ Codex discovers `.agents/skills/` in the vault. For Claude Code, configure `.cla
 Start at `ROUTER.md`, open matching routing pages, then read selected cards and sources. Run `kb build` after editing cards. See [AGENTS.md](AGENTS.md) for the card contract and [GUIDE.md](GUIDE.md) for the detailed method. Keep personal content in your own vault.
 
 Migrated from `Choysang/Obsidian-Wiki-llm`. Maintained only in Agent Suite; original Git history and [MIT license](LICENSE) are preserved. Method references: [Karpathy LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), [LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2).
+
+## Evidence-backed reuse feedback
+
+Requirement-wise retrieval, compact reading, revision-bound feedback and content budgets retain the existing card schema. Copy the complete `.agents/skills/kb/scripts/` directory, including `kb_rsi.py`, when upgrading. Existing cards remain readable. See [the governance protocol](RSI.md).
+
+Run `python -m pytest .agents/skills/kb/scripts -q` and `python .agents/skills/kb/scripts/kb.py --vault . lint Templates`. Regression checks establish behavior, not improvements in real task outcomes. Feedback signals must not replace evidence or relevance.

@@ -9,3 +9,4 @@ Rules for any agent working on this repository. Docs are Chinese; code, identifi
 - Zero runtime dependencies. Dev only: `typescript`, `@types/node`.
 - Before finishing: `npm test` and `npm run check` both green.
 - Parallel work: one agent per layer file set; never two agents editing the same file.
+- Knowledge integration belongs in the Skill and optional state projection. Keep adopted-card revisions/task IDs and evidence-backed friction references; never infer tool failures from user-only voice, write to a vault from the kernel, or block relay on feedback availability. Protocol v2 retains v1 draft/bundle compatibility.

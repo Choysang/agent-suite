@@ -1,6 +1,6 @@
 // Domain vocabulary of the handoff protocol. Pure data, no behaviour, no IO.
 
-export const PROTOCOL = 1;
+export const PROTOCOL = 2;
 
 /** relay: one agent hands over to the next. fork: one of N parallel lanes. join: lanes merged back. */
 export type Kind = 'relay' | 'fork' | 'join';

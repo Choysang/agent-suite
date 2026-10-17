@@ -5,6 +5,17 @@ import { clean, front, goal, lanes, validate } from '../src/core/draft.ts';
 import type { Manifest, RawTurn } from '../src/core/types.ts';
 import { citations, delta, fromJsonl, numbered, renumber, toJsonl } from '../src/core/voice.ts';
 import { BRIEF, state } from './helpers.ts';
+import { PROTOCOL } from '../src/core/types.ts';
+
+test('v2 optional knowledge projections preserve v1 draft compatibility', () => {
+  const brief = BRIEF.replace(' CITE', '');
+  const legacy = state('continue');
+  assert.equal(PROTOCOL, 2);
+  assert.deepEqual(validate({ brief, state: legacy, fork: null, recalled: null }, new Set()), []);
+  const extended = legacy + '\n# 知识引用（Referenced KB Notes）\n- 无\n# 摩擦与异常（Friction & Anomalies）\n- 根因待查，日志见 test:failure\n';
+  assert.deepEqual(validate({ brief, state: extended, fork: null, recalled: null }, new Set()), []);
+  assert.ok(clean(extended).includes('根因待查'));
+});
 
 const turn = (session: string, k: number, ts: string, text = `m${k}`): RawTurn => ({
   ts,

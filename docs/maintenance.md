@@ -46,3 +46,9 @@ README 的下载链接始终指向最近一次正式发布。提交源码后需�
 迁移前另行保存了原仓库镜像、可恢复的 Git bundle 和仓库元数据。handoff 原仓库的项目交接引用包含在本地备份中，不放进分享用的模块下载包。个人 Obsidian 知识库内容未参与迁移。
 
 原有许可证分别保留；handoff 的 `package.json` 已声明 MIT，本次补齐许可证文件。工作指南仍保留 Caixin Cai 的版权声明。
+
+## 受控改进与本地副本
+
+设计取舍见 [rsi-design.md](rsi-design.md)。知识库新实现包含 `kb.py` 和 `kb_rsi.py`，更新整个 scripts 目录；保留个人卡片、taxonomy 和偏好。新字段按变更逐步接入，迁移前记录 Git 状态与备份，先跑兼容性回归，再刷新路由。模板可用 lint 检查，真实库用 check 验证原有契约。
+
+能力晋升必须提供证据、最小 Diff、独立验收与回滚点。相关度与事实证据不被效用分覆盖；固定夹具不作为真实收益证明。修改源码后，还要核对 handoff CLI/Skill junction 和 vault 的实际路径，避免只改发布副本。手动回退采用选择性 git revert 或已备份文件，不覆盖其他工作。

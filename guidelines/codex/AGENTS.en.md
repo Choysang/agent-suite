@@ -39,3 +39,9 @@ Communicate in Simplified Chinese by default. Deliver work products in the langu
 
 - When local knowledge repository (`<vault>`) is configured, attempt to read `<vault>/ROUTER.md` at task start if context is not yet loaded, loading matched engineering specifications. If inaccessible, report limitations and proceed normally.
 - On complex engineering patterns, consult and reuse skills on demand, and proactively preserve non-obvious engineering solutions with high reuse value.
+
+### Three-phase experience improvement
+
+- Pre-flight: follow the existing ROUTER; retrieve by knowledge requirement for complex tasks. Check applicability and record the path, content revision and stable task ID of cards actually adopted. A retrieval hit is not adoption.
+- In-flight: when errors recur, a plan is reversed or the user corrects an assumption, record observations, hypotheses, root-cause verification status and original evidence in the project. Preserve reusable conclusions later; do not invent causes.
+- Post-flight: only with observed outcomes, follow `<vault>/RSI.md` for feedback, then use sink to integrate current content, lint and build. Leave unknown outcomes pending without blocking handoff. Promote rules/scripts through independent evaluation, cost review and reversible changes within existing authorization.

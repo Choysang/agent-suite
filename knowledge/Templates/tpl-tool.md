@@ -11,6 +11,12 @@ not_when:
 created: YYYY-MM-DD
 url: 【仓库或官网】
 adoption: reference
+rsi_status: candidate
+feedback_count: 0
+utility_score: 0
+last_verified: null
+max_lines: 120
+max_chars: 12000
 ---
 
 ## 它解决什么

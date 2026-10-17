@@ -88,6 +88,7 @@ def test_router_command_finds_cards_from_another_directory_with_spaces(tmp_path,
     script = vault / ".agents/skills/kb/scripts/kb.py"
     script.parent.mkdir(parents=True)
     shutil.copyfile(kb.__file__, script)
+    shutil.copyfile(Path(kb.__file__).with_name("kb_rsi.py"), script.with_name("kb_rsi.py"))
     write(vault / kb.TAXONOMY, TAXONOMY)
     write(vault / kb.WIKI / "lessons/prod-pull.md", LESSON)
     assert kb.build(vault, TODAY).errors == []
@@ -208,3 +209,68 @@ def test_router_line_limit(vault):
     many = "\n".join(f"  d{i}:\n    name: D{i}\n    keywords: [k]\n    topics:\n      t: [k]" for i in range(80))
     write(vault / kb.TAXONOMY, f"split_threshold: 40\ndomains:\n{many}\n")
     assert any("超过" in e for e in kb.build(vault, TODAY).errors)
+
+
+def run_find(vault, *args):
+    return subprocess.run(
+        [sys.executable, "-B", str(Path(kb.__file__)), "--vault", str(vault), "find", *args],
+        capture_output=True, text=True, encoding="utf-8", timeout=15,
+    )
+
+
+def test_need_search_keeps_separate_evidence_and_an_unanswered_need(vault):
+    result = run_find(vault, "生产部署", "--need", "云主机部署", "--need", "镜像漏洞",
+                      "--need", "zzzzunavailablefacet", "-k", "1", "--json")
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    first, second, missing = report["requirements"]
+    assert first["hits"][0]["path"].endswith("/prod-pull.md")
+    assert second["hits"][0]["path"].endswith("/trivy.md")
+    assert missing["hits"] == [] and missing["retrieval_status"] == "no_lexical_match"
+    assert all(need["coverage"] == "unassessed" for need in report["requirements"])
+    assert len(report["candidates"]) == 2
+
+
+def test_need_search_deduplicates_cards_without_merging_requirement_scores(vault):
+    report = kb.find_needs(kb.load(vault)[0], "任务", ["生产机", "生产机 pull"])
+    assert len(report["candidates"]) == 1
+    assert all(len(need["hits"]) == 1 for need in report["requirements"])
+    assert "score" not in report["candidates"][0]  # scores belong to a particular query
+
+
+def test_find_json_preserves_list_and_exposes_boundaries_and_provenance(vault):
+    result = run_find(vault, "生产机", "--json")
+    assert result.returncode == 0, result.stderr
+    hits = json.loads(result.stdout)
+    assert isinstance(hits, list) and hits[0]["id"] == "prod-pull"
+    assert hits[0]["not_when"] == ["本地开发"]
+    assert hits[0]["source"] == ["测试"] and hits[0]["verified"] == "2026-10-07"
+    assert hits[0]["evidence"] == "实测" and hits[0]["state"] == "active"
+    assert isinstance(hits[0]["score"], float)
+    tool = kb.card_record(next(c for c in kb.load(vault)[0] if c.id == "trivy"))
+    assert tool["url"] == "https://github.com/aquasecurity/trivy"
+    assert tool["evidence"] == ""  # type/adoption must not manufacture verification
+
+
+def test_need_search_excludes_inactive_cards_and_preserves_conflicts(vault):
+    write(vault / kb.WIKI / "lessons" / "old.md", LESSON.replace("status: active", "status: superseded"))
+    write(vault / kb.WIKI / "lessons" / "conflict.md", LESSON.replace("status: active", "status: conflict"))
+    for state in ("candidate", "rejected"):
+        write(vault / kb.WIKI / "tools" / f"{state}.md", TOOL.replace("adoption: reference", f"adoption: {state}"))
+    report = kb.find_needs(kb.load(vault)[0], "任务", ["生产机", "镜像漏洞"], k=10)
+    candidates = {card["id"]: card for card in report["candidates"]}
+    assert set(candidates) == {"prod-pull", "conflict", "trivy"}
+    assert candidates["conflict"]["state"] == "conflict"
+
+
+def test_find_reports_unreadable_card_instead_of_partial_results(vault):
+    write(vault / kb.WIKI / "notes" / "broken.md", "---\nkind: note\ntags: [\n---\n")
+    result = run_find(vault, "生产机", "--json")
+    assert result.returncode == 1 and result.stdout == ""
+    assert "broken.md" in result.stderr and "ERROR" in result.stderr
+
+
+@pytest.mark.parametrize("args", [("-k", "0"), ("-k", "-1"), ("--need", "  "), ("--need", "?!")])
+def test_find_rejects_unusable_search_parameters(vault, args):
+    result = run_find(vault, "生产机", *args)
+    assert result.returncode == 2

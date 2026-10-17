@@ -30,3 +30,9 @@ If a needed skill is unavailable, consult `<vault>/.agents/skills/<name>/SKILL.m
 
 ---
 Use judgment over rigid procedure. Be ambitious about outcomes, restrained about complexity, and efficient with attention and resources.
+
+### Three-phase experience improvement
+
+- Pre-flight: follow the existing ROUTER; retrieve by knowledge requirement for complex tasks. Check applicability and record the path, content revision and stable task ID of cards actually adopted. A retrieval hit is not adoption.
+- In-flight: when errors recur, a plan is reversed or the user corrects an assumption, record observations, hypotheses, root-cause verification status and original evidence in the project. Preserve reusable conclusions later; do not invent causes.
+- Post-flight: only with observed outcomes, follow `<vault>/RSI.md` for feedback, then use sink to integrate current content, lint and build. Leave unknown outcomes pending without blocking handoff. Promote rules/scripts through independent evaluation, cost review and reversible changes within existing authorization.

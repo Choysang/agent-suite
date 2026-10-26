@@ -1,7 +1,7 @@
 // Git adapter: the Store lives in refs/handoff/*, the Workspace is the working tree. Plumbing only.
 
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, realpathSync, rmSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { LIMITS, type Claim, type Manifest } from '../core/types.ts';
 import type { Bundle, Commit, FileIn, Snapshot, Store, Workspace } from '../ports.ts';
@@ -315,7 +315,19 @@ export class GitWorkspace implements Workspace {
     const existing = await this.worktree(branch);
     if (existing) {
       const normalize = (value: string) => process.platform === 'win32' ? resolve(value).toLowerCase() : resolve(value);
-      if (normalize(existing) === normalize(path)) return;
+      if (normalize(existing) === normalize(path)) {
+        const workspace = existsSync(path) ? await GitWorkspace.open(path) : null;
+        if (!workspace || normalize(workspace.root) !== normalize(realpathSync(path))
+            || await workspace.branch() !== branch) {
+          throw new Error(`工作区失效：${path}；请恢复原工作区或修复 Git worktree 注册后重试`);
+        }
+        const common = await this.git.run(['rev-parse', '--path-format=absolute', '--git-common-dir']);
+        const actual = await workspace.repo.run(['rev-parse', '--path-format=absolute', '--git-common-dir']);
+        if (normalize(realpathSync(common)) !== normalize(realpathSync(actual))) {
+          throw new Error(`工作区失效：${path} 属于其他仓库`);
+        }
+        return;
+      }
       throw new Error(`分支 ${branch} 已在 ${existing}，不能在 ${path} 重建`);
     }
     const ref = `refs/heads/${branch}`;

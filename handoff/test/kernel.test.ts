@@ -1,7 +1,7 @@
 // End to end on real git: prepare → seal → load, races, reconcile, fork → join, take.
 
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join as path } from 'node:path';
 import { test } from 'node:test';
 import { load, take } from '../src/kernel/load.ts';
@@ -210,6 +210,32 @@ test('a failed fork resumes existing children and worktrees without resealing th
   assert.ok(result.lanes.every(l => existsSync(l.path)));
   assert.equal(ctx.desk.read('sealed.json'), null);
   await assert.rejects(recover(ctx), /没有待恢复/);
+});
+
+test('fork recovery preserves its record when a registered worktree was moved', async () => {
+  const dir = repo(); const ctx = await context(dir);
+  await prepare(ctx);
+  write(ctx, { fork: '## lane: a\nnext: a\naccept: a\nowns: a/**\n\n## lane: b\nnext: b\naccept: b\nowns: b/**\n' });
+  const add = ctx.ws.addWorktree.bind(ctx.ws);
+  let attempts = 0;
+  ctx.ws.addWorktree = async (...args) => {
+    if (++attempts === 2) throw new Error('simulated path unavailable');
+    await add(...args);
+  };
+  await assert.rejects(seal(ctx), /simulated path unavailable/);
+  const lane = `${dir}@2-a`, moved = `${dir}@2-a-moved`;
+  renameSync(lane, moved);
+  try {
+    await assert.rejects(recover(ctx), /工作区失效/);
+    assert.ok(ctx.desk.read('sealed.json'));
+    assert.equal(existsSync(lane), false, 'failed recovery must not create an empty desk');
+  } finally {
+    if (!existsSync(lane)) renameSync(moved, lane);
+  }
+  const result = await recover(ctx);
+  assert.equal(result.lanes.length, 2);
+  assert.equal(readFileSync(path(lane, 'app.txt'), 'utf8'), 'v1\n');
+  assert.equal(ctx.desk.read('sealed.json'), null);
 });
 
 test('recalled voice is used only without transcripts, and is not re-imported by the next relay', async () => {

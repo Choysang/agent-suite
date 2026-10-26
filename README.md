@@ -67,7 +67,7 @@ npm run verify
 
 | 日期 | 版本 / 状态 | 模块与实际变化 | 记录 |
 |---|---|---|---|
-| 2026-10-26 | 1.2.0 源码与本机集成，尚未打包发布 | 统一宿主目录解析；指南托管选择持久化与漂移检查；跨项目读取 vault 配置；跨盘目录备份与物理目录别名去重；fork 写入范围冲突校验与失效工作区恢复检查；修复人工隔离和反馈幂等重试；补研究机制与工程边界。 | [验证](docs/validation-1.2.md) · [研究落点](docs/research-to-architecture.md) |
+| 2026-10-26 | 1.2.0（下载状态见 Releases） | 统一宿主目录解析；指南托管选择持久化与漂移检查；跨项目读取 vault 配置；跨盘目录备份与物理目录别名去重；fork 写入范围冲突校验与失效工作区恢复检查；修复人工隔离和反馈幂等重试；补研究机制与工程边界。 | [验证](docs/validation-1.2.md) · [研究落点](docs/research-to-architecture.md) |
 | 2026-10-18 | 1.2.0 源码升级 | 统一安装/诊断/命令入口；知识引擎模块化、排他写入与失败恢复；新增冻结候选和成对实验记录；修复接力与看板；指南核验目标与解法建议；补 Windows/Linux CI。 | [架构](docs/architecture.md) · [实验](docs/experiments.md) · [维护](docs/maintenance.md) |
 | 2026-10-17 | main，尚未打包发布 | **工作指南与首页**：更新 Codex、Claude 与通用版英文指南，强化前提核验、最小必要复杂度和可观察结果；通用中文版增加极简提示；首页补充模块、安装与工作流介绍。本轮进一步改为可追溯的版本记录。 | [指南更新提交](https://github.com/Choysang/agent-suite/commit/55793c9) |
 | 2026-10-17 | **[v1.1.0](https://github.com/Choysang/agent-suite/releases/tag/v1.1.0)** | **知识库**：分项检索、精简读取、版本绑定反馈、反例隔离和正文预算；增加保留原文的全库整理规则。**handoff 协议 v2**：新增可选知识引用与摩擦记录，兼容旧草稿。**工作指南**：接入三阶段经验反馈入口。 | [设计取舍](docs/rsi-design.md) · [整理方法](docs/knowledge-curation.md) · [验证记录](docs/rsi-validation.md) |

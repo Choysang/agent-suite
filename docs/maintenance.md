@@ -21,7 +21,7 @@ agent-suite kb build
 
 不要用自动 reset 覆盖未提交工作。源码路径改变后从新目录重新 `npm link`、`agent-suite install`。独立知识模块更新时同步整个 `scripts/` 包，不能只复制 `kb.py`；独立 handoff 继续使用其安装命令。
 
-配置在 `~/.agent-suite/config.json`，测试可以用 `AGENT_SUITE_HOME` 隔离。安装器将被替换的目录或文件重命名到备份处，返回原路径与备份路径。vault 备份在 `<vault>/.agent-suite/backups/`，宿主文件通常备份到 `~/.agent-suite/backups/`；若配置目录经链接搬到其他磁盘，备份留在实际目录所在卷的 `.agent-suite/backups/`，以安装结果返回的路径为准。常规失败会撤回已经完成的操作，再写配置表示成功。断电后的状态须用 doctor 检查；按返回的备份路径恢复，不删除私人内容。
+配置在 `~/.agent-suite/config.json`，测试可以用 `AGENT_SUITE_HOME` 隔离。安装器将被替换的目录或文件重命名到备份处，返回原路径与备份路径。备份始终留在目标实际目录所在文件系统：Skill 备份放在其真实 skills 父目录的 `.agent-suite/backups/`，指南备份放在指南真实父目录的 `.agent-suite/backups/`。直接指定另一磁盘的宿主目录和通过目录链接搬迁均适用，以安装结果返回的路径为准。宿主和 vault 共用物理目录时，每个目标只安装一次。常规失败会撤回已经完成的操作，再写配置表示成功。断电后的状态须用 doctor 检查；按返回的备份路径恢复，不删除私人内容。
 
 托管指南只维护 `agent-suite:start/end` 区块，原有非托管文字保持不变。首次迁移旧版完整指南时应检查重复规则，保留用户自定义内容后再整合。`RSI.md` 和个人工作指南属于文档，升级时核对并合并当前版本；它们不会被 Skills 链接替换。Obsidian vault 的 Git 可忽略 `.agent-suite/` 备份和机器特定的引擎链接，不上传到公开仓库。
 

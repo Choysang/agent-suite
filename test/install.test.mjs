@@ -92,6 +92,41 @@ test('backups follow relocated host profiles instead of crossing filesystem volu
   assert.equal(doctor(p).ok, true);
 });
 
+test('host and vault aliases install each physical destination once', t => {
+  const { p, home, vault, root } = fixture(t);
+  mkdirSync(join(vault, '.agents/skills/kb'), { recursive: true });
+  writeFileSync(join(vault, '.agents/skills/kb/SKILL.md'), 'old implementation');
+  mkdirSync(home, { recursive: true });
+  symlinkSync(join(vault, '.agents'), join(home, '.agents'), process.platform === 'win32' ? 'junction' : 'dir');
+  const result = install(p, { vault });
+  assert.equal(result.changed, 6);
+  assert.equal(realpathSync(join(home, '.agents/skills/kb')), realpathSync(join(root, 'knowledge/.agents/skills/kb')));
+  assert.equal(install(p).changed, 0);
+  assert.equal(doctor(p).ok, true);
+});
+
+test('host aliases to an uncreated vault directory do not create self links', t => {
+  const { p, home, vault, root } = fixture(t);
+  mkdirSync(home, { recursive: true });
+  symlinkSync(join(vault, '.agents'), join(home, '.agents'), process.platform === 'win32' ? 'junction' : 'dir');
+  assert.equal(install(p, { vault }).changed, 6);
+  assert.equal(realpathSync(join(home, '.agents/skills/kb')), realpathSync(join(root, 'knowledge/.agents/skills/kb')));
+  assert.equal(install(p).changed, 0);
+  assert.equal(doctor(p).ok, true);
+});
+
+test('direct custom host directories keep backups on their own filesystem', t => {
+  const { p, temp, vault } = fixture(t);
+  const host = join(temp, 'direct-host');
+  mkdirSync(join(host, 'skills/kb'), { recursive: true });
+  writeFileSync(join(host, 'skills/kb/SKILL.md'), 'preserve direct host');
+  const custom = { ...p, env: { CLAUDE_CONFIG_DIR: host } };
+  const result = install(custom, { vault, agents: ['claude'] });
+  const backup = result.backups.find(item => item.path === join(host, 'skills/kb'));
+  assert.ok(backup.backup.startsWith(join(realpathSync(host), '.agent-suite/backups')));
+  assert.equal(readFileSync(join(backup.backup, 'SKILL.md'), 'utf8'), 'preserve direct host');
+});
+
 test('upgrading a checkout repairs host links that directly target the old source', t => {
   const { p, home, vault, root, temp } = fixture(t);
   install(p, { vault });

@@ -1,5 +1,5 @@
-import { lstatSync, realpathSync, existsSync, mkdirSync, renameSync, symlinkSync, readFileSync, unlinkSync } from 'node:fs';
-import { dirname, join, resolve, relative, isAbsolute } from 'node:path';
+import { lstatSync, realpathSync, readlinkSync, existsSync, mkdirSync, renameSync, symlinkSync, readFileSync, unlinkSync } from 'node:fs';
+import { dirname, basename, join, resolve, relative, isAbsolute } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { SKILLS, AGENTS, profile, atomicWrite, loadConfig, inspectCommand, pythonCommand } from './runtime.mjs';
 
@@ -16,6 +16,24 @@ export function sameTarget(destination, source) {
     if (['ENOENT', 'ENOTDIR'].includes(error.code)) return false;
     throw error;
   }
+}
+
+function resolvedPath(path, visited = new Set()) {
+  if (visited.has(path)) throw new Error(`Cyclic installation path: ${path}`);
+  visited.add(path);
+  try { return realpathSync(path); } catch (error) {
+    if (error.code !== 'ENOENT' || dirname(path) === path) throw error;
+    if (stat(path)?.isSymbolicLink()) {
+      return resolvedPath(resolve(dirname(path), readlinkSync(path)), visited);
+    }
+    return join(resolvedPath(dirname(path), visited), basename(path));
+  }
+}
+
+function destinationKey(path) {
+  // Resolve the parent, never the leaf link that the installer will replace.
+  const physical = join(resolvedPath(dirname(path)), basename(path));
+  return process.platform === 'win32' ? physical.toLowerCase() : physical;
 }
 
 export function guidelineContent(existing, template, vault) {
@@ -69,7 +87,29 @@ export function installationPlan(p, options) {
     }
     action.changed = !sameTarget(action.path, plannedSource || action.source);
   }
-  return { schemaVersion: 1, vault, agents, python, guidelines, sourceRoot: p.root, actions };
+  const unique = new Map();
+  const finalSource = action => {
+    const visited = new Set([action.path]);
+    let source = action.source;
+    for (;;) {
+      if (visited.has(source)) throw new Error(`Cyclic installation source: ${action.path}`);
+      visited.add(source);
+      const next = actions.find(other => other.type === 'link' && other.path === source);
+      if (!next) return realpathSync(source);
+      source = next.source;
+    }
+  };
+  for (const action of actions) {
+    const key = destinationKey(action.path);
+    const previousAction = unique.get(key);
+    if (!previousAction) unique.set(key, action);
+    else if (previousAction.type !== action.type || (action.type === 'link'
+      ? finalSource(previousAction) !== finalSource(action)
+      : previousAction.content !== action.content)) {
+      throw new Error(`Conflicting installation destinations: ${previousAction.path} and ${action.path}`);
+    }
+  }
+  return { schemaVersion: 1, vault, agents, python, guidelines, sourceRoot: p.root, actions: [...unique.values()] };
 }
 
 export function install(p, options = {}) {
@@ -83,14 +123,11 @@ export function install(p, options = {}) {
       if (!action.changed) continue;
       const old = stat(action.path);
       if (old) {
-        const inVault = !relative(plan.vault, action.path).startsWith('..') && !isAbsolute(relative(plan.vault, action.path));
         const parent = dirname(action.path);
         const physicalParent = realpathSync(parent);
-        // A relocated host profile may live on another volume. Keep rename backups
-        // beside its physical skills directory, outside the scanned skills tree.
-        const backupHome = physicalParent !== resolve(parent)
-          ? join(action.type === 'link' ? dirname(physicalParent) : physicalParent, '.agent-suite')
-          : inVault ? join(plan.vault, '.agent-suite') : p.configHome;
+        // Both direct overrides and directory links can cross volumes. Back up
+        // on the destination filesystem, outside the scanned skills directory.
+        const backupHome = join(action.type === 'link' ? dirname(physicalParent) : physicalParent, '.agent-suite');
         const backup = join(backupHome, 'backups', transaction, `${index}-${action.type}`);
         mkdirSync(dirname(backup), { recursive: true });
         renameSync(action.path, backup);

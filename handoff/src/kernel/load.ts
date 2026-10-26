@@ -1,6 +1,7 @@
 // load / take: claim a seal, reconcile it with the worktree, hand the receiving agent everything it needs.
 
 import { takeable } from '../core/dag.ts';
+import { relative } from 'node:path';
 import { FILES, type Claim, type Manifest, type Turn } from '../core/types.ts';
 import { fromJsonl, sorted } from '../core/voice.ts';
 import { claimant, type Ctx } from './context.ts';
@@ -16,6 +17,7 @@ export interface Reconcile {
 }
 
 export interface Loaded {
+  readonly location: { readonly current: string; readonly required: string | null; readonly currentBranch: string; readonly requiredBranch: string; readonly ready: boolean };
   readonly manifest: Manifest;
   readonly brief: string;
   readonly state: string;
@@ -35,13 +37,23 @@ export async function load(ctx: Ctx, n: number | null, alreadyClaimed = false): 
   const claimed = alreadyClaimed ? { ok: true, previous: null } : await ctx.store.claim(id, claimant(ctx, null, null), true);
   if (!claimed.ok) throw new Error(`#${id} 刚被 ${claimed.previous?.agent ?? '另一个会话'} 认领（${claimed.previous?.at ?? ''}）；确实要接手就重试`);
   const previous = claimed.previous;
-  const reconcile = await reconcileWith(ctx, bundle.manifest);
-  ctx.desk.setHead(id);
+  const currentBranch = await ctx.ws.branch();
+  const required = await ctx.ws.worktree(bundle.manifest.lane);
+  const samePath = required !== null && relative(required, ctx.ws.root) === '';
+  const ready = currentBranch === bundle.manifest.lane && (required === null || samePath);
+  const location = { current: ctx.ws.root, required, currentBranch, requiredBranch: bundle.manifest.lane, ready };
+  // A claim may be pulled from another lane; never restore its files into this one.
+  const reconcile: Reconcile = ready ? await reconcileWith(ctx, bundle.manifest) : {
+    head: { same: false, actual: await ctx.ws.head(), since: [], ahead: 0 },
+    worktree: 'unknown', diff: '请先进入目标工作区再载入；当前工作区未对账或恢复。', missing: [],
+  };
+  if (ready) ctx.desk.setHead(id);
 
   const voicePaths = [...bundle.files.keys()].filter(p => p.startsWith('voice/'));
   const texts = await bundle.texts([FILES.brief, FILES.state, FILES.lane, ...voicePaths]);
   const voice = sorted(voicePaths.flatMap(p => fromJsonl(texts.get(p) ?? '')));
   return {
+    location,
     manifest: bundle.manifest,
     brief: texts.get(FILES.brief) ?? '',
     state: texts.get(FILES.state) ?? '',

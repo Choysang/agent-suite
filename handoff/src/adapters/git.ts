@@ -312,7 +312,29 @@ export class GitWorkspace implements Workspace {
   }
 
   async addWorktree(path: string, branch: string, at: string): Promise<void> {
-    await this.git.run(['worktree', 'add', '-b', branch, path, at]);
+    const existing = await this.worktree(branch);
+    if (existing) {
+      const normalize = (value: string) => process.platform === 'win32' ? resolve(value).toLowerCase() : resolve(value);
+      if (normalize(existing) === normalize(path)) return;
+      throw new Error(`分支 ${branch} 已在 ${existing}，不能在 ${path} 重建`);
+    }
+    const ref = `refs/heads/${branch}`;
+    if (await this.git.succeeds(['show-ref', '--verify', '--quiet', ref])) {
+      const tip = await this.git.run(['rev-parse', ref]);
+      const base = await this.git.run(['rev-parse', at]);
+      if (tip !== base) throw new Error(`分支 ${branch} 已移动；请在现有分支上恢复工作区`);
+      await this.git.run(['worktree', 'add', path, branch]);
+    } else await this.git.run(['worktree', 'add', '-b', branch, path, at]);
+  }
+
+  async worktree(branch: string): Promise<string | null> {
+    const out = await this.git.run(['worktree', 'list', '--porcelain', '-z']);
+    let path: string | null = null;
+    for (const entry of out.split('\0')) {
+      if (entry.startsWith('worktree ')) path = entry.slice(9);
+      if (entry === `branch refs/heads/${branch}`) return path;
+    }
+    return null;
   }
 }
 

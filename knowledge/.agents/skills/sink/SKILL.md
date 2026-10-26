@@ -5,7 +5,9 @@ description: 把经验沉淀进 第二大脑。会话中踩坑并解决、找到
 
 # sink — 沉淀
 
-参数里有「复盘」就走复盘模式，否则走单条模式。规范以 Vault `AGENTS.md` 为准。`kb` = `python .agents/skills/kb/scripts/kb.py`。
+先运行 `agent-suite config --json` 取得实际 `vault`，再读取该库的 `AGENTS.md` 与 `RSI.md`；本文路径均相对该库，不是当前项目。统一入口用 `agent-suite kb`。未安装时，从宿主指南或用户已指定的位置确定 `<vault>`，使用 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；路径未知时先定位，不以当前目录猜测。个人偏好以 vault 规范为准，不写回共享 Skill。
+
+参数里有「复盘」就走复盘模式，否则走单条模式。规范以 Vault `AGENTS.md` 为准。`kb` 指上述已配置入口。
 
 ## 先检查实际采用记录
 
@@ -31,3 +33,7 @@ description: 把经验沉淀进 第二大脑。会话中踩坑并解决、找到
 ## 预算与收尾
 
 对每张变更卡执行 `kb lint <path>`，超标时精简当前结论、去重护栏或拆独立主题，原始证据留在 source/Git。然后 `kb build`。反馈造成的隔离也需要 build 更新路由；修复后以新版本重新评估。只暂存本次文件，不包含用户其他未提交工作。
+
+## 候选规则验收
+
+经验准备晋升成规则或工具时，先用 `kb experiment init --help` 冻结一项候选改动、版本引用、开发与独立验收任务。实际运行后 record 指标、成本和证据，再 report 检查成对差异与缺失项。报告不是质量判决，不凭分数自动替换全局规则。详见 Vault `RSI.md`。

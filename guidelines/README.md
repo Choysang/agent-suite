@@ -1,39 +1,34 @@
 # 工作指南
 
-[返回 Agent Suite](https://github.com/Choysang/agent-suite) · [English](README.en.md) · [单独下载](https://github.com/Choysang/agent-suite/releases/latest/download/guidelines.zip)
+[返回首页](../README.md) · [English](README.en.md)
 
-给 Agent 一份做事约定：先核对问题，主动推进，少加没用的复杂度，保留别人的改动，验证到什么程度就说明到什么程度。
+把稳定的行为约定交给 Agent：区分目标与建议、核对重要假设、按证据纠偏、清晰分工、完成必要验证。检索、交接和经验治理的具体步骤留在相应 Skill 与协议中。
 
-## 选一个版本
+## 选择一个版本
 
-| 你用什么 | 中文 | English | 怎样使用 |
+| 使用场景 | 中文 | English | 入口 |
 |---|---|---|---|
-| Codex / 终端代码 Agent | [Codex 版](codex/AGENTS.md) | [Codex edition](codex/AGENTS.en.md) | 放进项目根目录的 `AGENTS.md`；全局使用可放到 `~/.codex/AGENTS.md` |
-| Claude 聊天 | [Claude 版](claude/INSTRUCTIONS.md) | [Claude edition](claude/INSTRUCTIONS.en.md) | 粘到 Claude 的个人偏好设置中 |
-| Claude Code / 其他 Agent | [通用版](universal/AGENTS.md) | [Universal edition](universal/AGENTS.en.md) | Claude Code 使用项目 `CLAUDE.md`；其他工具按其规则入口加载 |
+| Codex | [完整版](codex/AGENTS.md) | [Full](codex/AGENTS.en.md) | 项目 `AGENTS.md` 或个人 `~/.codex/AGENTS.md` |
+| Claude Code / 通用 Agent | [完整版](universal/AGENTS.md) | [Full](universal/AGENTS.en.md) | Claude Code 使用 `CLAUDE.md`；其他宿主使用其确认支持的规则入口 |
+| 简短规则 | [精简版](universal/AGENTS.compact.md) | [Compact](universal/AGENTS.compact.en.md) | 选精简版即可，无需叠加完整版 |
+| Claude 网页 / 桌面聊天 | [个人指令](claude/INSTRUCTIONS.md) | [Chat instructions](claude/INSTRUCTIONS.en.md) | 聊天产品的个人指令设置，区别于 Claude Code 本地规则 |
 
-只取需要的一个版本就行。文件是文本，可以直接在 GitHub 打开复制；也可以下载本模块后再挑。
+文件中的 `<vault>` 是占位符。手动安装时替换为自己的知识库路径；不用知识库就移除相关段落。
 
-已有规则时，把需要的条目合进去。指南里的 `<vault>` 表示你的知识库绝对路径：用知识库时替换为实际路径，暂时不用就删掉相关条目。
+## 用统一入口安装
 
-## 这些规则管什么
+在完整 Agent Suite 安装后运行：
 
-- **独立判断**：区分事实、推断和假设，发现前提有问题就说明依据。
-- **简单优先**：完成目标所需的事情先做好，再考虑增加复杂度。
-- **精准改动**：找到问题所在，保留无关行为和他人的工作。
-- **推进与验证**：在授权内把事情做完，如实说明检查结果和未验证项。
-- **知识积累**：按需读知识库，把以后还能用的做法留下来。
+```bash
+agent-suite install --vault "<vault>" --agents codex,claude --guidelines
+```
 
-## 和另外两个模块怎么配合
+安装器为 Codex 和 Claude Code 渲染英文完整版，在个人规则文件中维护 `agent-suite:start` / `agent-suite:end` 标记区，保留区外内容。重复执行会更新该区而非追加另一套规则。WorkBuddy、CodeBuddy 当前安装 Skills，不推测其全局规则位置。安装不注册未确认支持的宿主 hook。
 
-用[知识库](https://github.com/Choysang/agent-suite/tree/main/knowledge)时，在规则中填好知识库路径，让 Agent 开始任务前先读 `ROUTER.md`。
+公共模板保持可移植，真实路径只出现在本机配置与渲染后的规则中。已有旧规则时，检查区外是否保留重复全文；统一入口不会擅自删除用户自定义规则。
 
-用[会话交接](https://github.com/Choysang/agent-suite/tree/main/handoff)时，长任务换会话前执行交接，再由新会话接手。
+## 如何验证修改
 
-完整示例见[联合使用说明](https://github.com/Choysang/agent-suite/blob/main/docs/00-quickstart.md)。
+检查中英规则表达一致、完整版与精简版独立、无私人路径。行为测试应同时包含错误建议、正确建议、合法偏好和新证据纠正助手，避免把独立判断训练成机械反驳。文本校验通过不代表已测得任务收益。
 
-## 来源与许可
-
-迁自 `Choysang/agent-working-guidelines`，现在只在 Agent Suite 中维护。原始提交历史保留；结构参考了 [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills)。
-
-[MIT License](LICENSE)
+迁自 `Choysang/agent-working-guidelines`，保留原始历史；结构参考 [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills)。[MIT License](LICENSE)。

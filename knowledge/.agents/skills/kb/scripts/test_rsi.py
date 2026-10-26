@@ -86,6 +86,33 @@ def test_feedback_does_not_clear_a_legacy_manual_quarantine():
         submit({**meta, "rsi_status": "stale"}, body, "new-task")
 
 
+def test_manual_quarantine_survives_existing_positive_feedback_and_content_edits():
+    meta, body = kb.parse(LESSON)
+    for task in ("old-a", "old-b", "old-c"):
+        meta, _ = submit(meta, body, task)
+    meta["rsi_status"] = "stale"
+    for content in (body, body + "new content\n"):
+        assert rsi.summary(meta, content)["rsi_status"] == "stale"
+        assert not rsi.summary(meta, content)["promotion_ready"]
+        with pytest.raises(ValueError, match="人工隔离"):
+            submit(meta, content, "new-task")
+    meta["rsi_status"] = "candidate"
+    restored, changed = submit(meta, body, "after-explicit-review")
+    assert changed and restored["rsi_status"] == "candidate"
+
+
+def test_quarantine_preserves_identical_retries_without_accepting_new_feedback():
+    initial, body = kb.parse(LESSON)
+    for outcome in ("helpful", "misleading"):
+        meta, _ = submit(initial, body, "recorded", outcome)
+        meta["rsi_status"] = "stale"
+        meta.pop("quarantine_revision", None)
+        repeated, changed = submit(meta, body, "recorded", outcome)
+        assert not changed and repeated == meta
+        with pytest.raises(ValueError, match="人工隔离"):
+            submit(meta, body, "new")
+
+
 def test_read_and_search_omit_history_but_keep_later_boundaries_and_fenced_headings(vault):
     path = vault / kb.WIKI / "lessons/prod-pull.md"
     content = LESSON + "\n## 变更记录\noldonlykeyword\n## 边界\ncritical boundary\n```md\n## 变更记录\nfenced text\n```\n"

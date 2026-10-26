@@ -5,7 +5,9 @@ description: 你的每日开工与工作日志。用户说「开工」「今天�
 
 # daily — 待办与工作日志
 
-Vault：`.`（vault 根目录）。待办的唯一真相源是 `50.Daily/TODO.md`。daily 是自动生成的工作日志，记录每天完成了什么、开了什么会、随手记了什么。日期以系统真实日期为准。
+先运行 `agent-suite config --json` 取得实际 `vault`，再读取该库的 `AGENTS.md` 与 `RSI.md`；本文路径均相对该库，不是当前项目。统一入口用 `agent-suite kb`。未安装时，从宿主指南或用户已指定的位置确定 `<vault>`，使用 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；路径未知时先定位，不以当前目录猜测。个人偏好以 vault 规范为准，不写回共享 Skill。
+
+Vault 使用上述配置解析的绝对路径。待办的唯一真相源是 `50.Daily/TODO.md`。daily 是自动生成的工作日志，记录每天完成了什么、开了什么会、随手记了什么。日期以系统真实日期为准。
 
 ## 开工
 

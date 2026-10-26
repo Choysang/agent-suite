@@ -33,6 +33,7 @@ export interface Sealed {
 }
 
 export async function seal(ctx: Ctx): Promise<Sealed> {
+  if (ctx.desk.read('sealed.json') !== null) return recover(ctx);
   const raw = ctx.desk.read('draft.json');
   if (raw === null) throw new Error('没有草稿：先运行 handoff prepare（或 handoff join）');
   const meta = JSON.parse(raw) as DraftMeta;
@@ -81,7 +82,7 @@ export async function seal(ctx: Ctx): Promise<Sealed> {
       created,
       next,
       accept,
-      owns: [],
+      owns: laneMd ? parents[0]!.manifest.owns : [],
     };
     const files: FileIn[] = [
       ...cap.carried,
@@ -96,13 +97,40 @@ export async function seal(ctx: Ctx): Promise<Sealed> {
   };
 
   const sealed = await allocate(ctx, meta.n, n => make(n), meta.parents, m => `handoff #${m.id} ${m.kind}: ${m.next}`);
-  if (snap.commit) await ctx.store.keep(sealed.manifest.id, snap.commit);
-  // The parent is sealed: retire the draft now, so a failing lane can never cause a duplicate seal.
-  ctx.desk.clear();
-  ctx.desk.setHead(sealed.manifest.id);
   const lanes = forking ? parseLanes(renumber(draft.fork!, meta.n, sealed.manifest.id)) : [];
-  const children = lanes.length ? await fork(ctx, sealed.manifest, lanes) : [];
-  return { manifest: sealed.manifest, fresh: sealed.fresh.length, voice: cap.known.length + sealed.fresh.length, lanes: children };
+  // Retain the committed identity before side effects. A failed worktree or WIP
+  // write is resumed against this seal instead of minting another parent.
+  const pending: PendingSeal = {
+    id: sealed.manifest.id, snapshot: snap.commit, lanes,
+    fresh: sealed.fresh.length, voice: cap.known.length + sealed.fresh.length,
+  };
+  ctx.desk.write('sealed.json', JSON.stringify(pending) + '\n');
+  return recover(ctx);
+}
+
+interface PendingSeal {
+  readonly id: number;
+  readonly snapshot: string | null;
+  readonly lanes: readonly LaneTask[];
+  readonly fresh: number;
+  readonly voice: number;
+}
+
+/** Finish side effects of an already sealed draft; repeated attempts reuse its children. */
+export async function recover(ctx: Ctx): Promise<Sealed> {
+  const raw = ctx.desk.read('sealed.json');
+  if (raw === null) throw new Error('没有待恢复的封存');
+  const pending = JSON.parse(raw) as PendingSeal;
+  const { manifest } = await ctx.store.bundle(pending.id);
+  try {
+    if (pending.snapshot) await ctx.store.keep(pending.id, pending.snapshot);
+    ctx.desk.setHead(pending.id);
+    const children = await fork(ctx, manifest, pending.lanes);
+    ctx.desk.clear();
+    return { manifest, fresh: pending.fresh, voice: pending.voice, lanes: children };
+  } catch (error) {
+    throw new Error(`#${pending.id} 已封存，后续操作未完成；修正原因后运行 handoff recover（或重试 handoff seal）。${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  }
 }
 
 /** One child seal, branch `lane/<n>-<name>` and sibling worktree `<repo>@<n>-<name>` per lane. */
@@ -130,7 +158,9 @@ async function fork(ctx: Ctx, parent: Manifest, lanes: readonly LaneTask[]): Pro
       ];
       return { manifest, files, fresh: [] };
     };
-    const { manifest } = await allocate(ctx, parent.id + 1, make, [parent.id], m => `handoff #${m.id} fork ${lane.name}: ${m.next}`);
+    const existing = (await ctx.store.manifests()).find(m =>
+      m.kind === 'fork' && m.parents.length === 1 && m.parents[0] === parent.id && m.lane === `lane/${m.id}-${lane.name}`);
+    const manifest = existing ?? (await allocate(ctx, parent.id + 1, make, [parent.id], m => `handoff #${m.id} fork ${lane.name}: ${m.next}`)).manifest;
     const path = join(dirname(ctx.ws.root), `${basename(ctx.ws.root)}@${manifest.id}-${lane.name}`);
     await ctx.ws.addWorktree(path, manifest.lane, parent.repo.head ?? 'HEAD');
     ctx.deskAt(path).setHead(manifest.id);

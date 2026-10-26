@@ -117,14 +117,46 @@ function checkLanes(list: readonly LaneTask[]): string[] {
   if (list.length === 0) return ['fork.md 没有 lane（格式：## lane: 名称）'];
   const errors: string[] = [];
   const names = new Set<string>();
+  const owners: { lane: string; path: string }[] = [];
   for (const lane of list) {
     if (!LANE_NAME.test(lane.name)) errors.push(`lane 名只能用小写字母、数字、连字符：${lane.name}`);
     if (names.has(lane.name)) errors.push(`lane 重名：${lane.name}`);
     names.add(lane.name);
     if (!lane.next) errors.push(`lane ${lane.name} 缺 next:`);
     if (!lane.accept) errors.push(`lane ${lane.name} 缺 accept:`);
+    const fields = lane.text.split('\n').filter(line => line.startsWith('owns:'));
+    if (fields.length !== 1) {
+      errors.push(`lane ${lane.name} 必须明确填写一次 owns:（空值表示只读）`);
+      continue;
+    }
+    const value = fields[0]!.slice('owns:'.length).trim();
+    if (value && value.split(',').some(part => !part.trim())) errors.push(`lane ${lane.name} owns: 含空路径`);
+    if (/[\r\u2028\u2029]/.test(value)) errors.push(`lane ${lane.name} owns: 含不支持的换行`);
+    for (const raw of lane.owns) {
+      const path = ownershipPath(raw);
+      if (path === null) {
+        errors.push(`lane ${lane.name} owns 路径无效：${raw}（使用仓库相对路径，可带末尾 /**）`);
+        continue;
+      }
+      for (const previous of owners) {
+        if (previous.lane !== lane.name && (path === previous.path || !path || !previous.path
+            || path.startsWith(`${previous.path}/`) || previous.path.startsWith(`${path}/`))) {
+          errors.push(`lane ${lane.name} 与 ${previous.lane} 的 owns 范围重叠：${raw}`);
+        }
+      }
+      owners.push({ lane: lane.name, path });
+    }
   }
   return errors;
+}
+
+/** Portable lexical ownership, not filesystem permissions or symlink resolution. */
+function ownershipPath(raw: string): string | null {
+  const path = raw.replaceAll('\\', '/');
+  if (path.startsWith('/') || /^[a-z]:/i.test(path) || path.split('/').includes('..')) return null;
+  const plain = path.replace(/\/\*\*$/, '').replace(/\/+$/, '');
+  if (/[\x00-\x1f:*?\[\]{}]/.test(plain)) return null;
+  return plain.split('/').filter(part => part && part !== '.').join('/').toLowerCase();
 }
 
 function missing(file: string, md: string, required: readonly string[]): string[] {

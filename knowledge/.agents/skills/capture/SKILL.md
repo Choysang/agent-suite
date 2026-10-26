@@ -5,13 +5,15 @@ description: 把链接、文章、网页剪藏或粘贴的一段话收进 第二
 
 # capture — 入库
 
+先运行 `agent-suite config --json` 取得实际 `vault`，再读取该库的 `AGENTS.md` 与 `RSI.md`；本文路径均相对该库，不是当前项目。统一入口用 `agent-suite kb`。未安装时，从宿主指南或用户已指定的位置确定 `<vault>`，使用 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；路径未知时先定位，不以当前目录猜测。个人偏好以 vault 规范为准，不写回共享 Skill。
+
 ## 执行中的摩擦捕获
 
 连续工具报错、方案回退或用户纠偏时，即时在当前项目记录「观察/错误假设/根因（已验证或待查）/修复与验证/原始日志或原话定位」。有 handoff state 就写其“摩擦与异常”；没有则复用项目现有工作记录。先保留观察并继续解决任务，不为了填根因而猜测。脱敏后只保留必要片段；原始项目轨迹不搬进 vault。
 
 经过验证、值得跨任务复用时，交给 sink 写 lesson；纯资源入库仍走下面流程。参见 Vault `RSI.md`，不要给新资料默认标实测。
 
-规范以 Vault `AGENTS.md` 为准。`kb` = `python .agents/skills/kb/scripts/kb.py`。
+规范以 Vault `AGENTS.md` 为准。`kb` 指上述已配置入口。
 
 链接和剪藏走 `kb intake`，粘贴文字按下方说明处理：
 

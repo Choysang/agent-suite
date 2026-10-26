@@ -5,7 +5,9 @@ description: 整理 第二大脑：处理 00.Inbox、合并同类卡片、修复
 
 # tidy — 整理
 
-规范以 Vault `AGENTS.md` 为准。`kb` = `python .agents/skills/kb/scripts/kb.py`。
+先运行 `agent-suite config --json` 取得实际 `vault`，再读取该库的 `AGENTS.md` 与 `RSI.md`；本文路径均相对该库，不是当前项目。统一入口用 `agent-suite kb`。未安装时，从宿主指南或用户已指定的位置确定 `<vault>`，使用 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；路径未知时先定位，不以当前目录猜测。个人偏好以 vault 规范为准，不写回共享 Skill。
+
+规范以 Vault `AGENTS.md` 为准。`kb` 指上述已配置入口。
 
 1. **收件箱**：`00.Inbox/` 和 `Clippings/` 里的链接、文章、剪藏走 `capture`；工作文件（xlsx、docx 等）移到 `10.Projects/` 或 `20.Areas/`；没价值的列给用户。
 2. **合并**：找出上次 tidy 以来新增或修改的卡（`git log --since=<上次 tidy> --name-only -- 30.Wiki`），逐张 `kb find "<summary>"` 找同类，按吸收规则合并；「更优」和「冲突」列给用户拍板。
@@ -30,3 +32,7 @@ description: 整理 第二大脑：处理 00.Inbox、合并同类卡片、修复
 - 工作日志补标题、摘要与归属即可；历史已完成项只有可核对的完成日期才能按时限归档。缺附件与不可恢复的历史链接应列明，不创建伪资料或虚构完成状态。
 - 修改后运行 lint、check、build，检查原文哈希、关键用户改动和内部链接；试查代表性需求。功能通过不等于召回率或回答质量提升。
 - 发布只从通用项目仓库的明确文件清单构建；个人笔记、原文、访问资料与本地整理脚本不进入公开包。
+
+## 候选规则验收
+
+经验准备晋升成规则或工具时，先用 `kb experiment init --help` 冻结一项候选改动、版本引用、开发与独立验收任务。实际运行后 record 指标、成本和证据，再 report 检查成对差异与缺失项。报告不是质量判决，不凭分数自动替换全局规则。详见 Vault `RSI.md`。

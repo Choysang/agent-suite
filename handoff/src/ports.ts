@@ -58,6 +58,8 @@ export interface Workspace {
   exists(path: string): boolean;
   /** Add a worktree at `path` on a new branch starting at `at`. */
   addWorktree(path: string, branch: string, at: string): Promise<void>;
+  /** Registered worktree for a branch, or null when it is not checked out. */
+  worktree(branch: string): Promise<string | null>;
 }
 
 export interface Session {

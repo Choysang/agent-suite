@@ -1,9 +1,11 @@
 ---
 name: kb
-description: 查询、读取和维护 Obsidian 知识卡片，按需求检索、反馈实际采用效果、校验预算和生成路由。提供 find/read/feedback/lint/new/intake/check/build。
+description: 查询、读取和维护 Obsidian 知识卡片，按需求检索、反馈实际采用效果、校验预算和生成路由。提供 find/read/feedback/lint/new/intake/check/build/experiment。
 ---
 
 # kb — 知识库引擎
+
+先运行 `agent-suite config --json` 取得实际 `vault`，再读取该库的 `AGENTS.md` 与 `RSI.md`；本文路径均相对该库，不是当前项目。统一入口用 `agent-suite kb`。未安装时，从宿主指南或用户已指定的位置确定 `<vault>`，使用 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；路径未知时先定位，不以当前目录猜测。个人偏好以 vault 规范为准，不写回共享 Skill。
 
 规范以 Vault `AGENTS.md` 和 `RSI.md` 为准。以下 `kb` 指 `python "<vault>/.agents/skills/kb/scripts/kb.py" --vault "<vault>"`；从其他项目运行时始终用绝对路径。`KB_VAULT` 可设默认库。
 
@@ -15,6 +17,7 @@ description: 查询、读取和维护 Obsidian 知识卡片，按需求检索、
 | `kb lint [path-or-dir]` | 检查 when、可选治理字段、正文行数和字符预算；默认检查 30.Wiki，明确路径可检查 Templates |
 | `kb new <kind> <id> [--title 标题]` | 建卡；kind 为 lesson/playbook/note/source/tool，文件名即 id |
 | `kb intake <url-or-clip> [--id slug]` | 去重并建资源骨架，不运行收录项目 |
+| `kb experiment init/record/report` | 冻结候选 Diff、独立任务和指标，记录实际结果并成对比较；不自动晋升，详见 RSI.md |
 | `kb check` / `kb build` | 校验既有卡片契约；build 同时重建路由 |
 
 ## 检索与读取

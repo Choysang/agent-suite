@@ -85,6 +85,25 @@ test('fork.md lanes parse, and bad lanes are rejected', () => {
   assert.ok(bad.some(p => p.includes('Bad_Name')) && bad.some(p => p.includes('缺 next')));
 });
 
+test('new fork drafts require explicit, non-overlapping repository ownership', () => {
+  const check = (fork: string) => validate({ brief: BRIEF.replace(' CITE', ''), state: state('x'), fork, recalled: null }, new Set());
+  const lane = (name: string, owns: string) => `## lane: ${name}\nnext: work\naccept: checked\n${owns}\n`;
+  assert.deepEqual(check(lane('read', 'owns:')), []);
+  assert.deepEqual(lanes(lane('legacy-read', ''))[0]?.owns, []);
+  assert.ok(check(lane('missing', '')).some(error => error.includes('owns:')));
+  assert.ok(check(lane('duplicate', 'owns: a\nowns: b')).some(error => error.includes('owns:')));
+  for (const path of ['../outside', 'src/../outside', '/tmp', 'C:/tmp', 'C:tmp', '\\\\server\\share', 'src/*.ts']) {
+    assert.ok(check(lane('invalid', `owns: ${path}`)).some(error => error.includes('owns')), path);
+  }
+  assert.deepEqual(check(lane('a', 'owns: src/a/**') + lane('ab', 'owns: src/ab/')), []);
+  assert.ok(check(lane('a', 'owns: ./src\\a/**') + lane('child', 'owns: src/a/index.ts')).some(error => error.includes('重叠')));
+  assert.ok(check(lane('a', 'owns: src/a/') + lane('same', 'owns: src/a/**')).some(error => error.includes('重叠')));
+  for (const newline of ['\r', '\u2028', '\u2029']) {
+    assert.ok(check(lane('a', `note${newline}owns: src/a/**`) + lane('b', 'owns: src/a/index.ts')).some(error => error.includes('owns:')));
+    assert.ok(check(lane('a', `owns: src/a${newline}other`)).some(error => error.includes('owns:')));
+  }
+});
+
 const m = (id: number, parents: number[], lane = 'main'): Manifest =>
   ({ id, parents, lane, created: '2026-10-01T00:00:00Z' }) as unknown as Manifest;
 

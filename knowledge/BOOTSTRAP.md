@@ -60,3 +60,7 @@
 ```
 
 从其他项目中使用这份知识库时，把知识库路径写进工作指南。给 Agent 明确路径后，它可以读取相应 Skill 并运行脚本，见[联合使用说明](https://github.com/Choysang/agent-suite/blob/main/docs/00-quickstart.md)。
+
+## 从完整套件统一安装
+
+以上流程也支持独立下载。若使用完整 agent-suite 源码，在初始化 taxonomy 和工作目录后，从套件根目录 `npm link`，再运行 `agent-suite install --vault "<vault>" --agents codex,claude --guidelines`、`agent-suite kb build` 和 `agent-suite doctor`。安装器会将五个 vault Skill 目录链接到源码，替换前备份旧目录；个人卡片、taxonomy 和偏好保持在 vault。日常可从任意项目运行 `agent-suite kb`。独立使用时仍应在子命令前显式传 `--vault "<vault>"`。

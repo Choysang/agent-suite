@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 跨 Agent 会话接力。用户输入 /handoff（Codex 为 $handoff）时封存当前会话并得到编号；输入 /handoff <编号> 时在任意 Agent 接手继续干。也用于：换会话或换模型前、上下文快满、长任务到里程碑、把工作拆成并行 lane、汇合 lane。
+description: 跨 Agent 会话接力。用户输入 /handoff（Codex 为 $handoff）时封存当前会话并得到编号；输入 /handoff [编号] 时在任意 Agent 接手继续干。也用于：换会话或换模型前、上下文快满、长任务到里程碑、把工作拆成并行 lane、汇合 lane。
 allowed-tools: Bash(handoff *)
 ---
 <!-- handoff:skill -->
@@ -30,7 +30,7 @@ allowed-tools: Bash(handoff *)
    - 摩擦与异常：错误摘要、被纠正的假设、已验证或待查根因、修复验证及日志/原话出处。voice 只采用户原话，工具输出需另留脱敏定位，不编造缺失轨迹。
    - 只写事实；不确定的写「未验证」。用用户的语言写。
 4. 没有原始记录时（prepare 报告新增原话 0 条，而用户在本会话说过话），把用户的关键原话逐字写进 `.handoff/draft/recalled.md`，一段一条。
-5. 要并行时：先提交，再参照 `_fork.example.md` 写 `fork.md`，每条 lane 写清 `next`、`accept`、`owns`（只许改的路径），lane 之间的路径不要重叠。
+5. 要并行时：先提交，再参照 `_fork.example.md` 写 `fork.md`，每条 lane 写清 `next`、`accept`，并恰好填写一次 `owns:`。空值表示只读；可写范围用仓库相对路径，支持目录末尾 `/**`，不同 lane 不能重叠。校验统一斜杠并忽略大小写，不接受绝对路径、`..` 或其他 glob；这是协作契约，不是系统权限隔离。共享文件交给单独负责人。
 6. 运行 `handoff seal --session ${CLAUDE_SESSION_ID}`。校验不过就按提示修改后重跑。
 7. 把 seal 的输出原样给用户，它包含编号和接手方式。
 8. 阶段确实完成且有可复用证据时，按已配置知识库的 `sink` 做反馈与沉淀；单纯换会话、缺少结果或 vault 不可用时，把待评价项留给接手者，交接照常完成。不要把一次性失败强制写成普适经验。
@@ -38,9 +38,9 @@ allowed-tools: Bash(handoff *)
 ## 接手
 
 1. 运行 `handoff load <参数> --session ${CLAUDE_SESSION_ID}`（跨目录用 `项目-编号`，输出会给出仓库路径，之后在那里工作）。
-2. 通读输出。冲突时以高者为准：仓库文件、测试、git > 用户原话 > brief/state > 你的记忆。
+2. 通读输出。事实判断使用可核验的文件、测试和原始记录；目标、授权与约束遵循指令层级，旧实现不覆盖用户新要求。brief/state 是可修正投影。
 3. 现场报告是信息，不是关卡：HEAD 或工作区有差异，就看差异、判断它和下一步的关系，不必问用户。
-4. 用三行告诉用户：载入了什么、现场如何、从哪一步开始。然后立即执行第一步。
+4. 核对输出的执行目录与分支；若当前目录不匹配，先进入目标目录重新 load。用三行告诉用户：载入了什么、现场如何、从哪一步开始。然后执行第一步。
 5. 需要原话全文：`handoff show v7.3`；全部原话：`handoff show 7 voice`；历次账本：`handoff show 7 history`。
 
 ## 汇合

@@ -1,8 +1,38 @@
-# 三个模块一起用
+# 快速入门：统一安装与独立模块
 
 [返回首页](../README.md)
 
-按「开始一个项目 → 保存资料和经验 → 换会话 → 项目收尾」走一遍。每个模块都可以独立使用，不需要一次装齐。
+推荐完整套件使用统一入口；已有独立模块可以继续使用下方流程。需要 Node.js 24+、Python 3.11+、PyYAML 和 Git。
+
+## 统一安装
+
+先按 [BOOTSTRAP](../knowledge/BOOTSTRAP.md) 准备知识库；安装器要求已有 `30.Wiki/taxonomy.yml`，不替用户设计领域分类。
+
+```sh
+git clone https://github.com/Choysang/agent-suite.git
+cd agent-suite
+python -m pip install "PyYAML>=6"
+npm link
+agent-suite install --vault "<vault>" --agents codex,claude,workbuddy,codebuddy --guidelines
+agent-suite doctor
+agent-suite version --json
+```
+
+`<vault>` 换成真实路径。五个 vault Skills 指向源码，四种宿主使用同一份实现。Codex 的知识技能位于 `~/.agents/skills`，handoff 位于 `~/.codex/skills`；Claude、WorkBuddy、CodeBuddy 分别使用 `~/.claude/skills`、`~/.workbuddy-ai/skills`、`~/.codebuddy/skills`。替换的文件或目录会记录备份位置；重复执行可修复断链。
+
+`--guidelines` 为 Codex 的 `~/.codex/AGENTS.md` 和 Claude Code 的 `~/.claude/CLAUDE.md` 写入托管标记区，保留其余文字。Claude Code 使用通用模板，Claude 网页版模板仍需在账户设置中使用。当前会话可能需要重载；doctor 只核对本机依赖和链接，不把链接存在当作 hook 已触发。统一安装不改宿主 hook 配置。
+
+从任意项目运行：
+
+```sh
+agent-suite kb find "当前任务" --need "关键知识需求" --json
+agent-suite kb read "30.Wiki/lessons/example.md" --json
+agent-suite handoff --help
+```
+
+如有多个库，显式覆盖默认值：`agent-suite kb --vault "<另一个库>" find "任务"`。安装其他 Python 时加 `--python "<解释器路径>"`。需要查看改动计划可加 `--dry-run`；它不写入配置。
+
+以下为独立模块与日常流程。
 
 ## 1. 给 Agent 一份工作指南
 
@@ -104,3 +134,7 @@ git sparse-checkout set knowledge
 ```
 
 取工作指南就把 `knowledge` 换成 `guidelines`；取交接工具就换成 `handoff`。同时取两个模块，可以运行 `git sparse-checkout set guidelines knowledge`。后续用 `git pull` 更新。
+
+## 把经验变成可验收的候选
+
+准备修改提示、规则或工具时，使用 [experiment 工作流](experiments.md) 冻结 Diff 和独立任务；记录实际运行质量、成本和出处。先检查缺失项与退化，再决定是否应用。日常 feedback 与候选实验的用途不同，不能互相替代。

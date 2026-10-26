@@ -89,6 +89,7 @@ def test_router_command_finds_cards_from_another_directory_with_spaces(tmp_path,
     script.parent.mkdir(parents=True)
     shutil.copyfile(kb.__file__, script)
     shutil.copyfile(Path(kb.__file__).with_name("kb_rsi.py"), script.with_name("kb_rsi.py"))
+    shutil.copytree(Path(kb.__file__).parent / "kb_engine", script.parent / "kb_engine")
     write(vault / kb.TAXONOMY, TAXONOMY)
     write(vault / kb.WIKI / "lessons/prod-pull.md", LESSON)
     assert kb.build(vault, TODAY).errors == []

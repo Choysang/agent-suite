@@ -70,3 +70,9 @@ Skill 负责告诉 Agent 怎么做，`kb.py` 负责检索、建卡、去重、�
 支持按知识需求分项检索、精简读取、绑定内容版本的反馈与预算校验。新卡使用可选治理字段，旧卡仍可用；安装/升级时复制完整的 `.agents/skills/kb/scripts/`（含 `kb_rsi.py`），不要只复制入口文件。机制与边界见 [RSI.md](RSI.md)。
 
 验证：`python -m pytest .agents/skills/kb/scripts -q`；模板检查：`python .agents/skills/kb/scripts/kb.py --vault . lint Templates`。功能回归不等于真实任务质量提升。
+
+## 统一入口与模块边界
+
+完整套件可用 `agent-suite install --vault "<vault>"` 链接部署，日常运行 `agent-suite kb ...`；独立 Python 入口继续可用。源码在 `scripts/kb_engine/` 分为 model、repository、storage、search、routing、intake、governance、experiment、cli；`kb.py` 与 `kb_rsi.py` 是兼容入口。更新独立安装时需同步整个 scripts 目录。
+
+新建与剪藏采用排他发布，路由支持普通失败恢复。`experiment init/record/report` 冻结候选与分开的开发/验收任务，比较有证据的实际质量和成本记录，不自动晋升。见 [RSI](RSI.md)。

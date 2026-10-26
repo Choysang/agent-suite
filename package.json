@@ -1,0 +1,14 @@
+{
+  "name": "@choysang/agent-suite",
+  "version": "1.2.0",
+  "description": "Local knowledge, session handoff, and evidence-backed agent improvement.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "bin": { "agent-suite": "src/cli.mjs", "handoff": "handoff/src/faces/cli.ts" },
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "verify": "node scripts/verify.mjs"
+  }
+}

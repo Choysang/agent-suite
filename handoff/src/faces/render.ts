@@ -74,7 +74,9 @@ export function loaded(l: Loaded): string {
     `# 交接 #${m.id} · ${m.project.slug} · ${m.kind} · 来自 ${from} · ${stamp(m.created)}`,
     '',
     '## 现场报告',
-    `- 仓库：${m.project.root}`,
+    `- 当前目录：${l.location.current}（${l.location.currentBranch}）`,
+    `- 执行目录：${l.location.required ?? '该分支尚未创建本机 worktree'}（${l.location.requiredBranch}）`,
+    ...(!l.location.ready ? [`- 请先进入目标工作区再运行 handoff load ${m.id}；当前目录未恢复文件。`] : []),
     `- HEAD：${head}`,
     `- 工作区：${tree}`,
     ...(r.diff ? ['```', r.diff, '```'] : []),
@@ -91,7 +93,7 @@ export function loaded(l: Loaded): string {
   out.push(
     '',
     '## 接手规则',
-    '冲突时以高者为准：仓库文件、测试、git > 用户原话 > brief/state > 你的记忆。现场报告是信息不是关卡：核对后直接执行第一步。',
+    '事实判断优先使用可核验的文件、测试和原始记录；目标、授权与约束遵循指令层级，旧实现不覆盖用户新要求。brief/state 是可修正投影。先确认执行目录与分支，再执行第一步。',
   );
   return out.join('\n');
 }

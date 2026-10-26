@@ -8,7 +8,6 @@ import type { Session, TranscriptSource } from '../ports.ts';
 import { arr, first, lines, obj, str, type Json } from './jsonl.ts';
 
 const AGENT = 'codex';
-const DAY = 24 * 3600 * 1000;
 
 /** Context the harness injects as user-role text; never the user's own words. */
 const INJECTED = [
@@ -38,9 +37,10 @@ export class CodexTranscripts implements TranscriptSource {
 
   async sessions(since: number): Promise<Session[]> {
     if (!existsSync(this.root)) return [];
-    const floor = day(since - DAY);
     const found: Session[] = [];
-    for (const dir of await this.days(floor)) {
+    // A resumed conversation stays in its creation-date directory. Filter by file
+    // modification time, never by the directory date.
+    for (const dir of await this.days()) {
       for (const name of await readdir(dir)) {
         if (!name.startsWith('rollout-') || !name.endsWith('.jsonl')) continue;
         const path = join(dir, name);
@@ -73,14 +73,14 @@ export class CodexTranscripts implements TranscriptSource {
     return model;
   }
 
-  /** Date directories at or after `floor` (YYYY/MM/DD as a sortable string). */
-  private async days(floor: string): Promise<string[]> {
+  /** Date directories, including older conversations that were resumed today. */
+  private async days(): Promise<string[]> {
     const out: string[] = [];
     const sub = async (path: string) =>
       existsSync(path) ? (await readdir(path, { withFileTypes: true })).filter(d => d.isDirectory()).map(d => d.name) : [];
     for (const y of await sub(this.root))
       for (const m of await sub(join(this.root, y)))
-        for (const d of await sub(join(this.root, y, m))) if (`${y}/${m}/${d}` >= floor) out.push(join(this.root, y, m, d));
+        for (const d of await sub(join(this.root, y, m))) out.push(join(this.root, y, m, d));
     return out;
   }
 }
@@ -95,10 +95,4 @@ export function spoken(entry: Json): string | undefined {
     .map(t => t.replace(/^<image name=(\[[^\]]+\])[^>]*>$/, '$1').trim())
     .filter(Boolean);
   return parts.join('\n') || undefined;
-}
-
-function day(ms: number): string {
-  const d = new Date(ms);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
 }

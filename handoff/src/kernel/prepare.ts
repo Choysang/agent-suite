@@ -39,6 +39,7 @@ export async function join(ctx: Ctx, refs: readonly number[]): Promise<Prepared>
 }
 
 async function draft(ctx: Ctx, meta: DraftMeta, lanes: readonly SealView[]): Promise<Prepared> {
+  if (ctx.desk.read('sealed.json') !== null) throw new Error('上次封存的后续操作未完成：先运行 handoff recover');
   const bundles = await Promise.all(meta.parents.map(p => ctx.store.bundle(p)));
   const cap = await capture(ctx, bundles);
   const fresh = numbered(meta.n, cap.fresh);

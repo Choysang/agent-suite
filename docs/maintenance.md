@@ -1,35 +1,41 @@
-# 维护与迁移记录
+# 维护与升级
 
-[返回首页](../README.md)
+[返回首页](../README.md) · [模块边界](architecture.md)
 
-## 以后改哪里
+## 单一源码与部署
 
-只维护 `Choysang/agent-suite`，三个目录各自负责一部分：
+完整安装的代码来自同一个 checkout。`src/` 负责入口，`knowledge/` 负责知识和实验，`handoff/` 负责接力，`guidelines/` 负责行为约定。私人卡片、taxonomy、偏好、项目 Git 交接数据不会随公开包分发。
 
-| 目录 | 内容 |
-|---|---|
-| `guidelines/` | Codex、Claude、通用版工作指南，中英文本 |
-| `knowledge/` | 建库提示词、知识库规则、五个 Skill、Python 引擎和卡片模板 |
-| `handoff/` | 交接 Skill、命令行程序、协议、Agent 适配与测试 |
+更新前查看工作区状态和远端差异。取得预期版本后安装依赖、验证，再运行安装器和诊断：
 
-首页负责介绍和导航；每个模块的 README 负责自己的安装与用法。规则正文、脚本与模板各保留一个维护位置。
-
-## 怎样发布
-
-每次有面向使用者的改动，同步维护根 README 的「更新记录」：写明日期、版本或 main 未发布状态、影响模块、具体行为与验证入口。发布标签后将对应条目关联到 Release；不要把之前已有的功能写成本轮新增，也不要把源码更新说成下载包已更新。
-
-改完提交到 `main`。知识库和交接工具的测试通过后，给需要发布的提交打版本标签并推送：
-
-```bash
-git tag v1.0.2
-git push origin v1.0.2
+```sh
+npm ci
+npm ci --prefix handoff
+python -m pip install PyYAML pytest
+npm run verify
+agent-suite install --vault "<vault>" --agents codex,claude,workbuddy,codebuddy --guidelines
+agent-suite doctor --json
+agent-suite kb check
+agent-suite kb build
 ```
 
-`v1.0.2` 是后续版本的示例。`.github/workflows/release.yml` 会先跑测试，再从该标签的三个目录分别生成 `guidelines.zip`、`knowledge.zip`、`handoff.zip`，附带 `SHA256SUMS`，发布到 GitHub Releases。打包只读取 Git 已提交内容。
+不要用自动 reset 覆盖未提交工作。源码路径改变后从新目录重新 `npm link`、`agent-suite install`。独立知识模块更新时同步整个 `scripts/` 包，不能只复制 `kb.py`；独立 handoff 继续使用其安装命令。
 
-README 的下载链接始终指向最近一次正式发布。提交源码后需要发布版本，下载包才会更新；Git 用户可直接拉取源码。
+配置在 `~/.agent-suite/config.json`，测试可以用 `AGENT_SUITE_HOME` 隔离。安装器将被替换的目录或文件重命名到备份处，返回原路径与备份路径。vault 备份在 `<vault>/.agent-suite/backups/`，宿主文件通常备份到 `~/.agent-suite/backups/`；若配置目录经链接搬到其他磁盘，备份留在实际目录所在卷的 `.agent-suite/backups/`，以安装结果返回的路径为准。常规失败会撤回已经完成的操作，再写配置表示成功。断电后的状态须用 doctor 检查；按返回的备份路径恢复，不删除私人内容。
 
-安装了 handoff 的用户应保留原目录，更新其中的源码；换目录后重新运行 `npm link` 和 `handoff install`。知识库用户更新 Skills 与模板时，保留个人卡片、分类和偏好，不用安装资料覆盖整个知识库。
+托管指南只维护 `agent-suite:start/end` 区块，原有非托管文字保持不变。首次迁移旧版完整指南时应检查重复规则，保留用户自定义内容后再整合。`RSI.md` 和个人工作指南属于文档，升级时核对并合并当前版本；它们不会被 Skills 链接替换。Obsidian vault 的 Git 可忽略 `.agent-suite/` 备份和机器特定的引擎链接，不上传到公开仓库。
+
+## 检查与发布
+
+`agent-suite config --json` 是 Skills 读取 vault 和源码位置的统一入口，与当前工作目录无关。`--guidelines` 的选择保存在配置中，后续无参数 `install` 会继续更新托管区；`doctor` 检查其内容漂移和破损标记。宿主目录复用 handoff 的注册表，支持 `CODEX_HOME`、`CLAUDE_CONFIG_DIR`、`WORKBUDDY_CONFIG_DIR` 和 `CODEBUDDY_CONFIG_DIR`；Codex 的通用 Skills 仍使用 `~/.agents/skills`。改变目录环境变量后重新安装并诊断。
+
+个人称呼、会议来源和工作习惯保留在 vault 规范中；共享 Skill 不再嵌入机器路径或默认当前目录。升级旧定制 Skill 前核对差异，将仍适用的个人规则迁入 vault 规范；备份保留原文件。
+
+`npm run verify` 执行根安装测试、知识模块测试、模板 lint、handoff 测试、TypeScript 检查，以及指南本机路径检查。CI 对 Windows 和 Linux 运行同一入口。本机通过与远端 CI 通过要分别报告。
+
+有用户可见变动时，README 更新记录须包含日期、源码版本/发布状态、行为变化和验证入口。经验证提交后，推送新的版本标签才生成 Release。`.github/workflows/release.yml` 从提交内容生成 `agent-suite.zip` 和三个独立模块 zip，并附 SHA256SUMS。源码 main 领先 Release 时不得宣称下载包已更新。
+
+Prompt、检索或编排候选通过单元测试并不证明任务收益。使用 [experiment](experiments.md) 保留开发与独立验收任务的质量、成本、反例和原始证据；报告只做计算，不自动晋升。变更回退使用明确的 revert 或安装备份，保留其他人的工作。
 
 ## 原项目迁移
 
@@ -48,11 +54,3 @@ README 的下载链接始终指向最近一次正式发布。提交源码后需�
 迁移前另行保存了原仓库镜像、可恢复的 Git bundle 和仓库元数据。handoff 原仓库的项目交接引用包含在本地备份中，不放进分享用的模块下载包。个人 Obsidian 知识库内容未参与迁移。
 
 原有许可证分别保留；handoff 的 `package.json` 已声明 MIT，本次补齐许可证文件。工作指南仍保留 Caixin Cai 的版权声明。
-
-## 受控改进与本地副本
-
-全库笔记整理的内容分配、标签迁移、原文保留与发布边界见 [knowledge-curation.md](knowledge-curation.md)。整理规则随 `knowledge/.agents/skills/tidy/SKILL.md` 分发，个人标签和笔记不随公开包分发。
-
-设计取舍见 [rsi-design.md](rsi-design.md)。知识库新实现包含 `kb.py` 和 `kb_rsi.py`，更新整个 scripts 目录；保留个人卡片、taxonomy 和偏好。新字段按变更逐步接入，迁移前记录 Git 状态与备份，先跑兼容性回归，再刷新路由。模板可用 lint 检查，真实库用 check 验证原有契约。
-
-能力晋升必须提供证据、最小 Diff、独立验收与回滚点。相关度与事实证据不被效用分覆盖；固定夹具不作为真实收益证明。修改源码后，还要核对 handoff CLI/Skill junction 和 vault 的实际路径，避免只改发布副本。手动回退采用选择性 git revert 或已备份文件，不覆盖其他工作。

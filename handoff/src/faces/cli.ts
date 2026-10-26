@@ -6,19 +6,22 @@ import { goal } from '../core/draft.ts';
 import type { Ctx } from '../kernel/context.ts';
 import { load, take } from '../kernel/load.ts';
 import { join, prepare, views } from '../kernel/prepare.ts';
-import { DraftError, seal } from '../kernel/seal.ts';
+import { DraftError, recover, seal } from '../kernel/seal.ts';
 import { PARTS, show, showTurn, type Part } from '../kernel/show.ts';
 import { caller } from '../agents.ts';
 import { registry, wire } from '../wire.ts';
 import { install } from './install.ts';
 import { card, loaded, prepared, sealed, table } from './render.ts';
 import { startServer } from './server.ts';
+import { versionInfo } from './version.ts';
 
 const HELP = `handoff — 跨 Agent 会话接力
 
   handoff                      看板（同 handoff ls）
   handoff prepare [--parent N] 起草接力：.handoff/draft/ 里写 brief.md、state.md（可选 fork.md）
   handoff seal                 校验草稿并封存，得到编号
+  handoff recover              继续已封存交接的未完成快照/分叉操作
+  handoff version [--json]     实现版本与交接协议版本（同 --version）
   handoff load [N|项目-N]      认领 + 对账 + 输出交接包（不带编号则用本工作区的 .handoff/HEAD）
   handoff take                 原子认领最早的待接手交接并载入（并行 worker 用）
   handoff join N...            起草汇合：N 为分叉点或各 lane 末端
@@ -26,8 +29,8 @@ const HELP = `handoff — 跨 Agent 会话接力
   handoff show N [\${PARTS.join('|')}]
   handoff show vN.K            一条原话全文
   handoff sync [remote]        推送并拉取 refs/handoff/*
-  handoff ui [--port N]        启动可视化 Cognitive Mission Control 网页控制台
-  handoff serve [--port N]     启动无头 Mesh HTTP/SSE/A2A 服务
+  handoff ui [--port N]        打开本地只读交接看板（每5秒刷新）
+  handoff serve [--port N]     启动本地只读 HTTP 服务（127.0.0.1）
   handoff install              安装 skill（Claude Code、Codex）与 SessionStart hook
   通用选项：--session <id>     调用方会话 id（Claude Code skill 自动传入）`;
 
@@ -40,6 +43,7 @@ async function main(argv: string[]): Promise<number> {
       parent: { type: 'string' },
       port: { type: 'string' },
       json: { type: 'boolean' },
+      version: { type: 'boolean', short: 'v' },
       help: { type: 'boolean', short: 'h' },
     },
   });
@@ -48,6 +52,7 @@ async function main(argv: string[]): Promise<number> {
   const at = (cwd = process.cwd()) => wire(cwd, hint);
 
   if (values.help || command === 'help') return say(HELP);
+  if (values.version || command === 'version') return say(values.json ? JSON.stringify(versionInfo) : `handoff ${versionInfo.version} · protocol ${versionInfo.protocol}`);
   switch (command) {
     case 'ls': {
       const ctx = await at();
@@ -58,6 +63,8 @@ async function main(argv: string[]): Promise<number> {
       return say(prepared(await prepare(await at(), values.parent ? int(values.parent) : null)));
     case 'seal':
       return say(sealed(await seal(await at())));
+    case 'recover':
+      return say(sealed(await recover(await at())));
     case 'load': {
       const ref = rest[0] ? resolveRef(rest[0]) : null;
       return say(loaded(await load(await at(ref?.root), ref?.n ?? null)));
@@ -78,14 +85,14 @@ async function main(argv: string[]): Promise<number> {
     case 'ui': {
       const port = values.port ? Number(values.port) : undefined;
       const { port: p } = await startServer({ port, openBrowser: true });
-      process.stdout.write(`Cognitive Mission Control 已启动: http://localhost:${p}\n按 Ctrl+C 退出\n`);
+      process.stdout.write(`本地只读看板已启动: http://127.0.0.1:${p}\n按 Ctrl+C 退出\n`);
       await new Promise(() => {});
       return 0;
     }
     case 'serve': {
       const port = values.port ? Number(values.port) : undefined;
       const { port: p } = await startServer({ port, openBrowser: false });
-      process.stdout.write(`Handoff Mesh Server 运行中: http://localhost:${p}\n`);
+      process.stdout.write(`本地只读服务运行中: http://127.0.0.1:${p}\n`);
       await new Promise(() => {});
       return 0;
     }

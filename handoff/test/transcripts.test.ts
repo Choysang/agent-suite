@@ -17,6 +17,16 @@ interface Expect {
   readonly cwd: string;
 }
 
+test('a resumed Codex session in an old directory is selected by file modification time', async () => {
+  const root = tempDir('handoff-codex-resumed-');
+  const directory = join(root, '2020', '01', '01');
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, 'rollout-resumed.jsonl'), readFileSync(join(FIXTURES, 'codex.jsonl'), 'utf8'));
+  const source = new CodexTranscripts(root);
+  assert.deepEqual((await source.sessions(Date.now() - 60_000)).map(s => s.id), ['sess-1']);
+  assert.deepEqual(await source.sessions(Date.now() + 60_000), []);
+});
+
 for (const [agent, layout] of [
   ['claude', (root: string) => join(root, 'D--work-app', 'sess-1.jsonl')],
   ['codex', (root: string) => join(root, '2026', '10', '07', 'rollout-2026-10-07T16-00-00-sess-1.jsonl')],

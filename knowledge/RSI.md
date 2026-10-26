@@ -16,7 +16,7 @@
 - helpful +1、noop 0、misleading -2，只是整理线索，不是置信概率。helpful/misleading 都必须有证据定位。noop 不更新 last_verified；普通检索没有写入副作用。
 - 同一卡片同一 task 只能结算一次；相同重试无副作用，不同重试报错。续接不换 task ID。内容或适用条件变化后，旧记录保留但不为新版本加分；旧 revision 不能写反馈。
 - 当前版本存在一次有证据 misleading 即隔离为 stale，不让历史正分抵消反例。至少三个独立任务的有证据 helpful 仅产生 `promotion_ready`；还需复核这些证据的独立性、边界和反例，并在下一条符合条件的反馈中显式 `--confirm-review` 才标 verified。标签表示在记录场景中的复用经过审阅，不证明普遍正确，也不升级原有 evidence。
-- 修复卡片产生新 revision，重新以 candidate 评估。纯历史变化不改变版本。旧卡没有反馈记录时沿用显式 rsi_status；这属于人工历史状态，不是自动验证结果。人工隔离的旧卡必须先复核修复并显式改为 candidate，普通反馈不能解除该隔离。
+- 自动隔离记录 `quarantine_revision`，修复正文或适用条件产生新 revision 后重新以 candidate 评估；纯历史变化不改变版本。没有自动隔离标记的显式 `rsi_status: stale` 视为人工隔离，即使已有正反馈也不能自动解除。人工隔离时删除旧 `quarantine_revision`；复核修复后显式改为 candidate。旧卡没有反馈记录时沿用显式状态，它不是自动验证结果。
 
 ## 读取、预算与排序
 
@@ -28,10 +28,25 @@
 
 ## 修改和晋升
 
-`feedback` 采用单卡写锁、版本核对、同目录临时文件和原子替换；重写 YAML 的排版，保留未知字段和正文。不要与编辑器同时编辑同一张卡。若进程崩溃留下 `.feedback.lock`，先确认无写入者、检查原卡与 Git 差异，再手动删除锁重试；不自动抢锁。
+`new/intake/feedback/build` 共用 `.kb-write.lock` 协调引擎写入；`feedback` 另用单卡写锁、版本核对、同目录临时文件和原子替换；重写 YAML 的排版，保留未知字段和正文。不要与编辑器同时编辑同一张卡。若进程崩溃留下 `.kb-write.lock` 或 `.feedback.lock`，先确认无写入者、检查原卡与 Git 差异，再手动删除锁重试；不自动抢锁。
 
 `tidy` 将高频、跨场景有效经验列为晋升候选，不按分数自动修改全局规则。提案需要：复用记录、适用范围、一个最小改动、独立验收任务、上下文/执行成本与回滚提交。先优先放项目规则或局部 Skill；确实普适才提炼短全局规则，固定流程才脚本化。沿用已有授权，授权不足时先完成可审阅 Diff 再请求新增授权。
 
 ## 验证范围
 
 `python -m pytest .agents/skills/kb/scripts -q` 包含反馈、读取、预算、兼容性及固定查询夹具。夹具回归验证排序和隔离，不等于真实任务效用提升。后续维护独立于规则设计的留出任务，比较遗漏需求、错误采用、成功率与上下文/运行成本；出现退化先回滚再分析，不修改测试答案迎合改动。
+
+## 离线候选实验
+
+`kb experiment init/record/report` 把候选研究与效果验收分开，实验文件保存在项目内。它不调用模型、不执行任务，也不自动改规则。
+
+- `init <manifest.json>` 必填 task、hypothesis、change（UTF-8 diff 文件）、baseline、candidate、development、acceptance、metric 和 cost。任务列表不能重叠；metric 如 `success:higher`、`errors:lower`；cost 如 `tokens`、`usd`。可重复 `--card <path>` 固定实际采用卡片 revision。完整参数用 `kb experiment init --help` 查看。
+- manifest 内保存 diff 正文及 SHA256、两个版本引用、任务列表、指标方向和成本单位。改变候选或评估协议须另建实验，不在看过结果后修改原清单。
+- `record <manifest.json> --phase acceptance --variant candidate --task <id> --metric success=1 --cost tokens=1200 --evidence <原始结果定位>` 记录一次实际结果。所有声明的指标与成本都要填写。同任务同版本的相同重试幂等，不同结果不可覆盖；开发阶段与基线版本同理。
+- `report <manifest.json> --json` 只比较同一任务两版本都有记录的成对结果，显示未完成任务、成对成本与全部已记录成本。`ready_for_review` 仅表示记录齐全，仍可能效果退化。
+
+任务独立性、证据真伪和实际执行版本由复核者查原始运行记录；工具只验证记录结构和计算，不提供统计显著性或泛化保证。不要用本轮为了修复缺陷新增的单元测试，冒充针对提示词收益的独立验收任务。
+
+## 写入恢复边界
+
+新卡 ID 必须是单个合法文件名；全库重复 ID 与同名不同内容的原文都会拒绝覆盖。剪藏先保留原文再发布卡片，清理源文件失败可重试；路由先暂存全部产物，普通 I/O 失败时恢复已替换文件。多文件操作不宣称断电时的事务一致性，路由可重新 build。编辑器不参与引擎锁，不要同时编辑正在反馈的卡片。

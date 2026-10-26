@@ -6,7 +6,7 @@ import { join as path } from 'node:path';
 import { test } from 'node:test';
 import { load, take } from '../src/kernel/load.ts';
 import { join, prepare, views } from '../src/kernel/prepare.ts';
-import { DraftError, seal } from '../src/kernel/seal.ts';
+import { DraftError, recover, seal } from '../src/kernel/seal.ts';
 import { show, showTurn } from '../src/kernel/show.ts';
 import { BRIEF, commit, context, git, MemorySource, repo, state, write } from './helpers.ts';
 
@@ -136,7 +136,7 @@ test('fork into lanes with worktrees, work each lane, join them back', async () 
   voice.say('s1', dir, '并行做 a 和 b');
   const ctx = await context(dir, voice, 's1');
   await prepare(ctx);
-  const fork = '## lane: a\nnext: 做 a\naccept: a 通过\nowns: a/**\n\n## lane: b\nnext: 做 b\naccept: b 通过\n';
+  const fork = '## lane: a\nnext: 做 a\naccept: a 通过\nowns: a/**\n\n## lane: b\nnext: 做 b\naccept: b 通过\nowns: b/**\n';
   write(ctx, { fork });
   const s = await seal(ctx);
   assert.equal(s.manifest.id, 1);
@@ -160,6 +160,7 @@ test('fork into lanes with worktrees, work each lane, join them back', async () 
   write(laneA, { state: state('等待汇合') });
   const a2 = await seal(laneA);
   assert.equal(a2.manifest.lane, 'lane/2-a');
+  assert.deepEqual(a2.manifest.owns, ['a/**']);
   assert.ok((await show(laneA, a2.manifest.id, 'lane')).includes('做 a'), 'the lane task follows relays in the lane');
 
   const j = await join(ctx, [1]);
@@ -177,11 +178,38 @@ test('take hands each worker a different open seal', async () => {
   const dir = repo();
   const ctx = await context(dir);
   await prepare(ctx);
-  write(ctx, { fork: '## lane: a\nnext: a\naccept: a\n\n## lane: b\nnext: b\naccept: b\n' });
+  write(ctx, { fork: '## lane: a\nnext: a\naccept: a\nowns:\n\n## lane: b\nnext: b\naccept: b\nowns:\n' });
   await seal(ctx);
   const [first, second] = await Promise.all([take(await context(dir)), take(await context(dir))]);
   assert.deepEqual([first.manifest.id, second.manifest.id].sort(), [2, 3]);
+  assert.equal(first.location.ready, false);
+  assert.equal(first.location.currentBranch, 'main');
+  assert.ok(first.location.required?.includes('@2-a') || first.location.required?.includes('@3-b'));
+  assert.equal(ctx.desk.head(), 1, 'taking another lane does not repoint the current worktree');
   await assert.rejects(take(await context(dir)), /没有待接手/);
+});
+
+test('a failed fork resumes existing children and worktrees without resealing the parent', async () => {
+  const dir = repo(); const ctx = await context(dir);
+  await prepare(ctx);
+  write(ctx, { fork: '## lane: a\nnext: a\naccept: a\nowns: a/**\n\n## lane: b\nnext: b\naccept: b\nowns: b/**\n' });
+  const add = ctx.ws.addWorktree.bind(ctx.ws);
+  let attempts = 0;
+  ctx.ws.addWorktree = async (...args) => {
+    if (++attempts === 2) throw new Error('simulated path unavailable');
+    await add(...args);
+  };
+  await assert.rejects(seal(ctx), /#1 已封存.*handoff recover.*simulated path unavailable/);
+  assert.equal((await views(ctx)).length, 3);
+  assert.ok(ctx.desk.read('sealed.json'));
+  await assert.rejects(prepare(ctx), /handoff recover/);
+  const result = await seal(ctx);
+  assert.equal(result.manifest.id, 1);
+  assert.deepEqual(result.lanes.map(l => l.manifest.id), [2, 3]);
+  assert.equal((await views(ctx)).length, 3);
+  assert.ok(result.lanes.every(l => existsSync(l.path)));
+  assert.equal(ctx.desk.read('sealed.json'), null);
+  await assert.rejects(recover(ctx), /没有待恢复/);
 });
 
 test('recalled voice is used only without transcripts, and is not re-imported by the next relay', async () => {

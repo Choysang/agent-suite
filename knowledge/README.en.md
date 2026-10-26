@@ -27,3 +27,9 @@ Migrated from `Choysang/Obsidian-Wiki-llm`. Maintained only in Agent Suite; orig
 Requirement-wise retrieval, compact reading, revision-bound feedback and content budgets retain the existing card schema. Copy the complete `.agents/skills/kb/scripts/` directory, including `kb_rsi.py`, when upgrading. Existing cards remain readable. See [the governance protocol](RSI.md).
 
 Run `python -m pytest .agents/skills/kb/scripts -q` and `python .agents/skills/kb/scripts/kb.py --vault . lint Templates`. Regression checks establish behavior, not improvements in real task outcomes. Feedback signals must not replace evidence or relevance.
+
+## Unified deployment and implementation
+
+The complete suite offers `agent-suite install --vault "<vault>"` and `agent-suite kb ...`. Independent Python usage remains supported. `scripts/kb_engine/` separates model, repository, storage, search, routing, intake, governance, experiment and CLI concerns. `kb.py` and `kb_rsi.py` remain compatibility entries; update the entire scripts directory for standalone installations.
+
+Creation uses exclusive publication; intake preserves original evidence; route publication recovers from ordinary I/O failure. `experiment init/record/report` freezes candidates and separate development/acceptance tasks, then compares paired observed quality and cost. It neither calls models nor automatically promotes rules. See [RSI](RSI.md).
